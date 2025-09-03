@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_home">
+
+    <fragment
+        android:id="@+id/nav_home"
+        android:name="com.example.pointage.ui.home.HomeFragment"
+        android:label="@string/menu_home"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/nav_surveillant"
+        android:name="com.example.pointage.ui.surveillant.SurveillantFragment"
+        android:label="Surveillant"
+        tools:layout="@layout/fragment_surveillant" />
+
+    <fragment
+        android:id="@+id/nav_historique"
+        android:name="com.example.pointage.ui.historique.HistoriqueFragment"
+        android:label="Historique"
+        tools:layout="@layout/fragment_historique" />
+        
+    <fragment
+        android:id="@+id/nav_sanction"
+        android:name="com.example.pointage.ui.sanction.SanctionFragment"
+        android:label="Sanctions"
+        tools:layout="@layout/fragment_sanction" />
+</navigation>
