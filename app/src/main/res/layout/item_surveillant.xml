@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <!-- ID Surveillant -->
+        <TextView
+            android:id="@+id/id_surveillant_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ID Surveillant"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <!-- Nom -->
+        <TextView
+            android:id="@+id/nom_surveillant_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nom Surveillant"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="6dp"
+            app:layout_constraintTop_toBottomOf="@id/id_surveillant_text_view"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <!-- Numero_salle -->
+        <TextView
+            android:id="@+id/numero_salle_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Numero Salle"
+            android:layout_marginTop="4dp"
+            app:layout_constraintTop_toBottomOf="@id/nom_surveillant_text_view"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <!-- Contact -->
+        <TextView
+            android:id="@+id/contact_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Contact"
+            android:layout_marginTop="4dp"
+            app:layout_constraintTop_toBottomOf="@id/numero_salle_text_view"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <!-- QR Code -->
+        <ImageView
+            android:id="@+id/qr_code_image_view"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_marginTop="8dp"
+            android:contentDescription="QR Code"
+            app:layout_constraintTop_toBottomOf="@id/contact_text_view"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Bouton Sauvegarde -->
+        <Button
+            android:id="@+id/save_qr_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Save QR Code"
+            app:layout_constraintTop_toBottomOf="@id/qr_code_image_view"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>

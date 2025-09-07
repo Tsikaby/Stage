@@ -10,12 +10,15 @@
             android:title="@string/menu_home" />
         <item
             android:id="@+id/nav_surveillant"
+            android:icon="?attr/actionModePasteDrawable"
             android:title="Surveillant" />
         <item
             android:id="@+id/nav_historique"
+            android:icon="@android:drawable/ic_menu_recent_history"
             android:title="Historique" />
         <item
             android:id="@+id/nav_sanction"
+            android:icon="@android:drawable/ic_dialog_dialer"
             android:title="Sanctions" />
     </group>
 </menu>
