@@ -10,49 +10,57 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:padding="8dp">
 
         <TextView
             android:id="@+id/nom_surveillant_historique"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Nom du Surveillant: "
+            android:text="Surveillant"
             android:textStyle="bold"
             android:textSize="16sp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/delete_icon" />
+            app:layout_constraintEnd_toStartOf="@+id/delete_icon"
+            app:layout_constraintBottom_toTopOf="@+id/heure_historique"/>
 
         <TextView
             android:id="@+id/heure_historique"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Heure: "
-            android:layout_marginTop="4dp"
+            android:text="Heure"
             app:layout_constraintTop_toBottomOf="@id/nom_surveillant_historique"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/delete_icon" />
+            app:layout_constraintEnd_toStartOf="@+id/delete_icon"/>
 
         <TextView
             android:id="@+id/retard_historique"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Retard: "
-            android:layout_marginTop="4dp"
+            android:text="Retard"
             app:layout_constraintTop_toBottomOf="@id/heure_historique"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/delete_icon" />
+            app:layout_constraintEnd_toStartOf="@+id/delete_icon"/>
+
+        <TextView
+            android:id="@+id/salle_historique"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Salle"
+            app:layout_constraintTop_toBottomOf="@id/retard_historique"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/delete_icon"
+            app:layout_constraintBottom_toBottomOf="parent"/>
 
         <ImageView
             android:id="@+id/delete_icon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:src="@android:drawable/ic_delete"
+            android:contentDescription="Supprimer"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:tint="@android:color/holo_red_dark"
-            android:contentDescription="Supprimer" />
+            app:layout_constraintBottom_toBottomOf="parent"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 </androidx.cardview.widget.CardView>

@@ -16,7 +16,6 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.pointage.databinding.FragmentHistoriqueBinding;
-import com.google.firebase.Timestamp;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -38,7 +37,8 @@ public class HistoriqueFragment extends Fragment implements HistoriqueAdapter.On
         binding = FragmentHistoriqueBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        historiqueViewModel = new ViewModelProvider(this).get(HistoriqueViewModel.class);
+        // Use Activity-scoped ViewModel to share updates between Activity and Fragment
+        historiqueViewModel = new ViewModelProvider(requireActivity()).get(HistoriqueViewModel.class);
 
         // --- RecyclerView ---
         historiqueAdapter = new HistoriqueAdapter(new ArrayList<>(), this);

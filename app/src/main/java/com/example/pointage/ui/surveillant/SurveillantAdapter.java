@@ -1,8 +1,12 @@
 package com.example.pointage.ui.surveillant;
 
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,8 +25,10 @@ import com.journeyapps.barcodescanner.BarcodeEncoder;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class SurveillantAdapter extends RecyclerView.Adapter<SurveillantAdapter.SurveillantViewHolder> {
 
@@ -117,27 +123,35 @@ public class SurveillantAdapter extends RecyclerView.Adapter<SurveillantAdapter.
         }
 
         private void saveImage(Bitmap bitmap, String name) {
-            String folderName = "PointageQR";
-            File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), folderName);
-
-            if (!directory.exists()) {
-                if (!directory.mkdirs()) {
-                    Toast.makeText(context, "Failed to create directory!", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-            }
-
+            ContentResolver resolver = context.getContentResolver();
+            ContentValues contentValues = new ContentValues();
             String fileName = "QR_" + name.replace(" ", "_") + "_" + System.currentTimeMillis() + ".png";
-            File file = new File(directory, fileName);
 
-            try (FileOutputStream out = new FileOutputStream(file)) {
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
-                out.flush();
-                Toast.makeText(context, "QR code saved to " + file.getAbsolutePath(), Toast.LENGTH_LONG).show();
+            // Configuration des valeurs pour MediaStore
+            contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+            contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/png");
+            contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/PointageQR");
+
+            // Enregistrement de l'image
+            Uri imageUri = null;
+            try {
+                // Obtenir l'URI de l'image pour y écrire
+                imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
+                if (imageUri == null) throw new IOException("Failed to create new MediaStore record.");
+
+                try (OutputStream fos = resolver.openOutputStream(Objects.requireNonNull(imageUri))) {
+                    if (fos == null) throw new IOException("Failed to get output stream.");
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                    Toast.makeText(context, "QR code enregistré dans la galerie!", Toast.LENGTH_LONG).show();
+                }
             } catch (IOException e) {
+                if (imageUri != null) {
+                    resolver.delete(imageUri, null, null);
+                }
                 e.printStackTrace();
-                Toast.makeText(context, "Error saving QR code!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Erreur lors de l'enregistrement: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }
+
     }
 }

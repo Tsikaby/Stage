@@ -1,11 +1,17 @@
 package com.example.pointage.ui.surveillant;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -20,6 +26,8 @@ public class SurveillantFragment extends Fragment {
     private FragmentSurveillantBinding binding;
     private SurveillantViewModel surveillantViewModel;
     private SurveillantAdapter surveillantAdapter;
+
+    private static final int REQUEST_WRITE_STORAGE = 112;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -56,6 +64,37 @@ public class SurveillantFragment extends Fragment {
         });
 
         return root;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        checkAndRequestPermissions();
+    }
+
+    private void checkAndRequestPermissions() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                    requireActivity(),
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_WRITE_STORAGE
+            );
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_WRITE_STORAGE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, you can now proceed
+                Toast.makeText(getContext(), "Storage permission granted!", Toast.LENGTH_SHORT).show();
+            } else {
+                // Permission denied
+                Toast.makeText(getContext(), "Storage permission denied. Cannot save QR code.", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     @Override

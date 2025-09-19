@@ -3,35 +3,39 @@ package com.example.pointage;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
+import android.content.Intent;
 
 import com.example.pointage.databinding.ActivityMainBinding;
+import com.example.pointage.ui.historique.HistoriqueViewModel;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.example.pointage.SupabaseClient;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AlertDialog;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
+import java.net.URLEncoder;
+import java.net.UnknownHostException;
+
 public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
-    private FirebaseFirestore db;
+    private SupabaseClient supabaseClient;
+    private HistoriqueViewModel historiqueViewModel;
 
-    // QR scanner
     private final ActivityResultLauncher<ScanOptions> barcodeLauncher = registerForActivityResult(new ScanContract(),
             result -> {
                 if (result.getContents() == null) {
@@ -44,64 +48,44 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("QR_SCAN", "Contenu scanné:\n" + scannedContent);
 
                 try {
-                    // Découper le texte scanné ligne par ligne
                     String[] lines = scannedContent.split("\n");
                     String idSurveillantStr = lines[0].split(":")[1].trim();
                     String nomSurveillant = lines[1].split(":")[1].trim();
                     String contact = lines[2].split(":")[1].trim();
-                    String idSalleStr = lines[3].split(":")[1].trim();
+                    String numeroSalleStr = lines[3].split(":")[1].trim();
 
                     long idSurveillant = Long.parseLong(idSurveillantStr);
-                    int idSalle = Integer.parseInt(idSalleStr);
 
-                    Log.d("QR_SCAN", "ID Surveillant: " + idSurveillant + " | Nom: " + nomSurveillant);
+                    Log.d("QR_SCAN", "ID Surveillant: " + idSurveillant + " | Nom: " + nomSurveillant + " | Salle: " + numeroSalleStr);
 
-                    // Vérifier le retard
-                    Calendar calendar = Calendar.getInstance();
-                    boolean isLate = calendar.get(Calendar.HOUR_OF_DAY) >= 8;
-
-                    db = FirebaseFirestore.getInstance();
-
-                    // Vérifier si un examen est prévu aujourd’hui
-                    Timestamp startTimestamp = new Timestamp(getTodayStart());
-                    Timestamp endTimestamp = new Timestamp(getTodayEnd());
-
-                    db.collection("examen")
-                            .whereGreaterThanOrEqualTo("date_examen", startTimestamp)
-                            .whereLessThanOrEqualTo("date_examen", endTimestamp)
-                            .get()
-                            .addOnSuccessListener(task -> {
-                                if (!task.isEmpty()) {
-                                    // Sauvegarder le pointage
-                                    Map<String, Object> pointageData = new HashMap<>();
-                                    pointageData.put("id_pointage", System.currentTimeMillis()); // ✅ ID numérique Long
-                                    pointageData.put("heure_pointage", new Timestamp(new Date()));
-                                    pointageData.put("id_surveillant", idSurveillant);
-                                    pointageData.put("nom_surveillant", nomSurveillant);
-                                    pointageData.put("contact", contact);
-                                    pointageData.put("id_salle", idSalle);
-                                    pointageData.put("retard", isLate);
-
-                                    db.collection("pointage").add(pointageData)
-                                            .addOnSuccessListener(ref -> Snackbar.make(binding.getRoot(),
-                                                    "Pointage OK pour " + nomSurveillant + ". Retard: " + isLate,
-                                                    Snackbar.LENGTH_LONG).setAnchorView(R.id.fab).show())
-                                            .addOnFailureListener(e -> Snackbar.make(binding.getRoot(),
-                                                    "Erreur sauvegarde: " + e.getMessage(),
-                                                    Snackbar.LENGTH_LONG).setAnchorView(R.id.fab).show());
-                                } else {
-                                    Snackbar.make(binding.getRoot(), "Pas d'examen prévu aujourd'hui", Snackbar.LENGTH_LONG)
+                    // Utiliser le ViewModel pour gérer le scan
+                    historiqueViewModel.performScan(numeroSalleStr, idSurveillant, nomSurveillant,
+                            new HistoriqueViewModel.OnScanResultListener() {
+                                @Override
+                                public void onScanSuccess(String message) {
+                                    Snackbar.make(binding.getRoot(), message, Snackbar.LENGTH_LONG)
                                             .setAnchorView(R.id.fab).show();
                                 }
-                            })
-                            .addOnFailureListener(e -> Snackbar.make(binding.getRoot(),
-                                    "Erreur récupération examen: " + e.getMessage(),
-                                    Snackbar.LENGTH_LONG).setAnchorView(R.id.fab).show());
 
+                                @Override
+                                public void onScanFailure(String errorMessage) {
+                                    Snackbar.make(binding.getRoot(), errorMessage, Snackbar.LENGTH_LONG)
+                                            .setAnchorView(R.id.fab).show();
+                                }
+                            });
+
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    Snackbar.make(binding.getRoot(), "Format QR Code invalide", Snackbar.LENGTH_LONG)
+                            .setAnchorView(R.id.fab).show();
+                    Log.e("QR_SCAN", "Format invalide", e);
+                } catch (NumberFormatException e) {
+                    Snackbar.make(binding.getRoot(), "ID surveillant invalide", Snackbar.LENGTH_LONG)
+                            .setAnchorView(R.id.fab).show();
+                    Log.e("QR_SCAN", "ID invalide", e);
                 } catch (Exception e) {
-                    Snackbar.make(binding.getRoot(), "QR Code invalide: " + e.getMessage(),
-                            Snackbar.LENGTH_LONG).setAnchorView(R.id.fab).show();
-                    e.printStackTrace();
+                    Snackbar.make(binding.getRoot(), "Erreur de scan: " + e.getMessage(), Snackbar.LENGTH_LONG)
+                            .setAnchorView(R.id.fab).show();
+                    Log.e("QR_SCAN", "Erreur générale", e);
                 }
             });
 
@@ -111,22 +95,47 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        try {
+            supabaseClient = SupabaseClient.getInstance();
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+
+        // Initialisation du ViewModel
+        historiqueViewModel = new ViewModelProvider(this).get(HistoriqueViewModel.class);
+
+        // Test de connexion Supabase
+        try {
+            TestSupabaseConnection.testConnection();
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+
         setSupportActionBar(binding.appBarMain.toolbar);
 
-        // Bouton scan QR
         binding.appBarMain.fab.setOnClickListener(view -> {
             ScanOptions options = new ScanOptions();
             options.setDesiredBarcodeFormats(ScanOptions.QR_CODE);
             options.setPrompt("Alignez le QR code dans le rectangle");
             options.setCameraId(0);
             options.setBeepEnabled(true);
-            options.setOrientationLocked(true); // portrait uniquement
+            options.setOrientationLocked(true);
             options.setBarcodeImageEnabled(true);
             options.setCaptureActivity(CaptureAct.class);
             barcodeLauncher.launch(options);
         });
 
-        // Navigation Drawer
+        // Test de connexion Supabase au clic long sur le FAB
+        binding.appBarMain.fab.setOnLongClickListener(view -> {
+            Snackbar.make(binding.getRoot(), "Test de connexion Supabase...", Snackbar.LENGTH_SHORT).show();
+            try {
+                TestSupabaseConnection.testConnection();
+            } catch (UnknownHostException e) {
+                throw new RuntimeException(e);
+            }
+            return true;
+        });
+
         DrawerLayout drawer = binding.drawerLayout;
         NavigationView navigationView = binding.navView;
         mAppBarConfiguration = new AppBarConfiguration.Builder(
@@ -136,6 +145,22 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
+
+        // Gérer le clic sur "Se déconnecter" dans le drawer
+        navigationView.setNavigationItemSelectedListener(item -> {
+            if (item.getItemId() == R.id.nav_logout) {
+                confirmLogout();
+                return true;
+            }
+            // Laisser le comportement par défaut pour les autres items
+            boolean handled = NavigationUI.onNavDestinationSelected(item, navController);
+            if (!handled) {
+                navController.navigate(item.getItemId());
+            }
+            DrawerLayout drawer1 = binding.drawerLayout;
+            drawer.closeDrawers();
+            return true;
+        });
     }
 
     @Override
@@ -144,29 +169,87 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    private void confirmLogout() {
+        new AlertDialog.Builder(this)
+                .setTitle("Confirmation")
+                .setMessage("Voulez-vous vraiment vous déconnecter ?")
+                .setPositiveButton("Oui", (dialog, which) -> performLogout())
+                .setNegativeButton("Non", (dialog, which) -> dialog.dismiss())
+                .show();
+    }
+
+    private void performLogout() {
+        // Déconnexion : mettre log=false côté Supabase et nettoyer la session locale
+        String username = getSharedPreferences("login", MODE_PRIVATE).getString("username", null);
+
+        if (username != null) {
+            String encodedUsername;
+            try {
+                encodedUsername = URLEncoder.encode(username, "UTF-8");
+            } catch (Exception e) {
+                encodedUsername = username;
+            }
+
+            JsonObject body = new JsonObject();
+            body.addProperty("log", false);
+            String filter = "username=eq." + encodedUsername;
+
+            supabaseClient.update("utilisateurs", filter, body, new SupabaseClient.SupabaseCallback() {
+                @Override
+                public void onSuccess(JsonArray result) {
+                    // Nettoyer local et retourner au login
+                    getSharedPreferences("login", MODE_PRIVATE)
+                            .edit()
+                            .putBoolean("log", false)
+                            .remove("username")
+                            .apply();
+                    Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                    i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(i);
+                    finish();
+                }
+
+                @Override
+                public void onError(Exception error) {
+                    // Même si l'UPDATE échoue, on nettoie localement et on retourne au login
+                    getSharedPreferences("login", MODE_PRIVATE)
+                            .edit()
+                            .putBoolean("log", false)
+                            .remove("username")
+                            .apply();
+                    Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                    i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(i);
+                    finish();
+                }
+            });
+        } else {
+            // Pas de username local : nettoyage simple
+            getSharedPreferences("login", MODE_PRIVATE)
+                    .edit()
+                    .putBoolean("log", false)
+                    .remove("username")
+                    .apply();
+            Intent i = new Intent(this, LoginActivity.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(i);
+            finish();
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_logout) {
+            confirmLogout();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     @Override
     public boolean onSupportNavigateUp() {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
-    }
-
-    // Utilitaires pour la journée en cours
-    private Date getTodayStart() {
-        Calendar todayStart = Calendar.getInstance();
-        todayStart.set(Calendar.HOUR_OF_DAY, 0);
-        todayStart.set(Calendar.MINUTE, 0);
-        todayStart.set(Calendar.SECOND, 0);
-        todayStart.set(Calendar.MILLISECOND, 0);
-        return todayStart.getTime();
-    }
-
-    private Date getTodayEnd() {
-        Calendar todayEnd = Calendar.getInstance();
-        todayEnd.set(Calendar.HOUR_OF_DAY, 23);
-        todayEnd.set(Calendar.MINUTE, 59);
-        todayEnd.set(Calendar.SECOND, 59);
-        todayEnd.set(Calendar.MILLISECOND, 999);
-        return todayEnd.getTime();
     }
 }

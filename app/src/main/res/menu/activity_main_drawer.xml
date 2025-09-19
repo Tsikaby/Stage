@@ -6,7 +6,7 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_home"
-            android:icon="@drawable/ic_menu_camera"
+            android:icon="?attr/actionModeCloseDrawable"
             android:title="@string/menu_home" />
         <item
             android:id="@+id/nav_surveillant"
@@ -20,5 +20,9 @@
             android:id="@+id/nav_sanction"
             android:icon="@android:drawable/ic_dialog_dialer"
             android:title="Sanctions" />
+        <item
+            android:id="@+id/nav_logout"
+            android:icon="@android:drawable/ic_menu_close_clear_cancel"
+            android:title="Se déconnecter" />
     </group>
 </menu>

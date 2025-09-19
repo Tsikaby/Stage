@@ -10,7 +10,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.pointage.R;
-import com.google.firebase.Timestamp;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,7 +22,7 @@ public class HistoriqueAdapter extends RecyclerView.Adapter<HistoriqueAdapter.Hi
         void onDeleteClick(Pointage pointage);
     }
 
-    private static List<Pointage> historiqueList;
+    private List<Pointage> historiqueList;
     private OnDeleteClickListener listener;
 
     public HistoriqueAdapter(List<Pointage> historiqueList, OnDeleteClickListener listener) {
@@ -53,10 +52,11 @@ public class HistoriqueAdapter extends RecyclerView.Adapter<HistoriqueAdapter.Hi
         return historiqueList.size();
     }
 
-    static class HistoriqueViewHolder extends RecyclerView.ViewHolder {
+    class HistoriqueViewHolder extends RecyclerView.ViewHolder {
         private final TextView nomSurveillantTextView;
         private final TextView heureTextView;
         private final TextView retardTextView;
+        private final TextView salleTextView;
         private final ImageView deleteIcon;
         private OnDeleteClickListener listener;
 
@@ -66,6 +66,7 @@ public class HistoriqueAdapter extends RecyclerView.Adapter<HistoriqueAdapter.Hi
             nomSurveillantTextView = itemView.findViewById(R.id.nom_surveillant_historique);
             heureTextView = itemView.findViewById(R.id.heure_historique);
             retardTextView = itemView.findViewById(R.id.retard_historique);
+            salleTextView = itemView.findViewById(R.id.salle_historique);
             deleteIcon = itemView.findViewById(R.id.delete_icon);
 
             deleteIcon.setOnClickListener(new View.OnClickListener() {
@@ -82,20 +83,28 @@ public class HistoriqueAdapter extends RecyclerView.Adapter<HistoriqueAdapter.Hi
         }
 
         public void bind(Pointage pointage) {
-            nomSurveillantTextView.setText("Surveillant: " + (pointage.getNom_surveillant() != null ? pointage.getNom_surveillant() : "Inconnu"));
+            // Afficher le nom du surveillant
+            String nomSurveillant = pointage.getNom_surveillant();
+            nomSurveillantTextView.setText("Surveillant : " +
+                    (nomSurveillant != null && !nomSurveillant.isEmpty() ? nomSurveillant : "Inconnu"));
 
-            Timestamp timestamp = pointage.getHeure_pointage();
-            if (timestamp != null) {
-                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
-                String formattedTime = sdf.format(new Date(timestamp.getSeconds() * 1000));
-                heureTextView.setText("Heure de scan: " + formattedTime);
+            // Afficher la date et l'heure de scan
+            Date date = pointage.getHeure_pointage();
+            if (date != null) {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy  HH:mm:ss", Locale.getDefault());
+                String formattedDateTime = sdf.format(date);
+                heureTextView.setText("Date et heure de scan : " + formattedDateTime);
             } else {
-                heureTextView.setText("Heure de scan: N/A");
+                heureTextView.setText("Date et heure de scan : N/A");
             }
 
-            // Ligne modifiée pour afficher "Oui" ou "Non"
-            String retardText = pointage.isRetard() ? "Oui" : "Non";
-            retardTextView.setText("Retard: " + retardText);
+            // Afficher retard : Oui ou Non
+            retardTextView.setText("Retard : " + (pointage.isRetard() ? "Oui" : "Non"));
+
+            // Afficher le numéro de salle
+            String numeroSalle = pointage.getNumero_salle();
+            salleTextView.setText("Salle : " +
+                    (numeroSalle != null && !numeroSalle.isEmpty() ? numeroSalle : "Non spécifiée"));
         }
     }
 }
