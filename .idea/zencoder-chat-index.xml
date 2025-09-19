@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ai.zencoder.plugin.chat.index">
+    <option name="activeChatId" value="55455f13-5969-4afc-9a69-3f8fe2c77fe8" />
+    <option name="chatMetadata" value="{&quot;55455f13-5969-4afc-9a69-3f8fe2c77fe8&quot;:{&quot;id&quot;:&quot;55455f13-5969-4afc-9a69-3f8fe2c77fe8&quot;,&quot;title&quot;:&quot;Afficher Surveillants Avec 0 Absences&quot;,&quot;createdAt&quot;:1758088094051,&quot;updatedAt&quot;:1758088373710,&quot;isAgent&quot;:true,&quot;isNameGenerated&quot;:true,&quot;messageCount&quot;:4,&quot;lastMessagePreview&quot;:&quot;**Exploring feature implementation**\n\nI’m focusing on implementing two features. First, I need to cr...&quot;},&quot;da1fd305-2bfd-473e-89ff-252720595c54&quot;:{&quot;id&quot;:&quot;da1fd305-2bfd-473e-89ff-252720595c54&quot;,&quot;title&quot;:&quot;Auto-Update Exam Attendance Logic&quot;,&quot;createdAt&quot;:1758017052661,&quot;updatedAt&quot;:1758017061194,&quot;isAgent&quot;:true,&quot;isNameGenerated&quot;:true,&quot;messageCount&quot;:2,&quot;lastMessagePreview&quot;:&quot;**Implementing new features**\n\nI need to focus on two important features. First, we want to ensure t...&quot;}}" />
+  </component>
+</project>
