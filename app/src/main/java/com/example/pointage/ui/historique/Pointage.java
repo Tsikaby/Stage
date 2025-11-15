@@ -14,7 +14,6 @@ public class Pointage {
 
     public Pointage() {}
 
-    public Long getId_pointage() { return id_pointage; }
     public Date getHeure_pointage() { return heure_pointage; }
     public Long getId_surveillant() { return id_surveillant; }
     public Long getId_examen() { return id_examen; }
@@ -26,7 +25,6 @@ public class Pointage {
     public void setId_pointage(Long id_pointage) { this.id_pointage = id_pointage; }
     public void setHeure_pointage(Date heure_pointage) { this.heure_pointage = heure_pointage; }
     public void setId_surveillant(Long id_surveillant) { this.id_surveillant = id_surveillant; }
-    public void setId_examen(Long id_examen) { this.id_examen = id_examen; }
     public void setRetard(boolean retard) { this.retard = retard; }
     public void setNom_surveillant(String nom_surveillant) { this.nom_surveillant = nom_surveillant; }
     public void setId(String id) { this.id = id; }

@@ -32,6 +32,10 @@ public class SanctionFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         sanctionViewModel = new ViewModelProvider(this).get(SanctionViewModel.class);
+        // Initialiser SharedPreferences pour la persistance des sanctions notifiées
+        if (getContext() != null) {
+            sanctionViewModel.initializeSharedPreferences(getContext());
+        }
         binding = FragmentSanctionBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
@@ -43,13 +47,13 @@ public class SanctionFragment extends Fragment {
         spinnerMonth = binding.spinnerMonth;
         spinnerYear = binding.spinnerYear;
 
-        // Populate the month spinner
+        // le spinner du mois
         String[] months = new DateFormatSymbols().getMonths();
         ArrayAdapter<String> monthAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, months);
         monthAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerMonth.setAdapter(monthAdapter);
 
-        // Populate the year spinner
+        // commencer avec l'annee en cours -5 ans
         List<String> years = new ArrayList<>();
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
         for (int i = currentYear - 5; i <= currentYear; i++) { // Past 5 years and current year
@@ -59,7 +63,7 @@ public class SanctionFragment extends Fragment {
         yearAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerYear.setAdapter(yearAdapter);
 
-        // Set listeners for the spinners
+        //les listeners pour les spinners
         AdapterView.OnItemSelectedListener spinnerListener = new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -70,14 +74,14 @@ public class SanctionFragment extends Fragment {
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                // Do nothing
+                // ne rien faire
             }
         };
 
         spinnerMonth.setOnItemSelectedListener(spinnerListener);
         spinnerYear.setOnItemSelectedListener(spinnerListener);
 
-        // Select the current month and year by default
+        // Selectionner le mois et l'annee en cours
         spinnerMonth.setSelection(Calendar.getInstance().get(Calendar.MONTH));
         spinnerYear.setSelection(years.indexOf(String.valueOf(currentYear)));
 

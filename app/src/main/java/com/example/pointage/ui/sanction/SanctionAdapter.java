@@ -60,10 +60,10 @@ public class SanctionAdapter extends RecyclerView.Adapter<SanctionAdapter.Sancti
             // Get month name from its number (0-indexed)
             String monthName = new DateFormatSymbols(Locale.getDefault()).getMonths()[sanction.getMois()];
 
-            nomSurveillantTextView.setText("Surveillant: " + sanction.getNom_surveillant());
-            moisSanctionTextView.setText("Mois: " + monthName);
-            retardsTextView.setText("Nombre de retards: " + sanction.getNombre_retards());
-            absencesTextView.setText("Nombre d'absences: " + sanction.getNombre_absences());
+            nomSurveillantTextView.setText(sanction.getNom_surveillant());
+            moisSanctionTextView.setText("📅 " + monthName + " " + sanction.getAnnee());
+            retardsTextView.setText(String.valueOf(sanction.getNombre_retards()));
+            absencesTextView.setText(String.valueOf(sanction.getNombre_absences()));
         }
     }
 }

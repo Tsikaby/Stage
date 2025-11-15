@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
@@ -11,8 +12,10 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
+        android:name=".PointageApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -21,6 +24,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.POINTAGE"
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="31">
 
         <!-- LoginActivity : activité de démarrage -->
@@ -41,6 +46,14 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="POINTAGE"
+            android:screenOrientation="sensor"
+            android:theme="@style/Theme.POINTAGE.NoActionBar"/>
+
+        <!-- RegisterActivity : inscription en attente d'approbation -->
+        <activity
+            android:name=".RegisterActivity"
+            android:exported="false"
+            android:label="Inscription"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.POINTAGE.NoActionBar"/>
 

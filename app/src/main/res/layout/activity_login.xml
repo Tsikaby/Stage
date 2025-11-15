@@ -35,4 +35,11 @@
         android:layout_height="wrap_content"
         android:text="Se connecter"
         android:layout_marginTop="20dp"/>
+
+    <Button
+        android:id="@+id/btnSignup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="S'inscrire"
+        android:layout_marginTop="12dp"/>
 </LinearLayout>

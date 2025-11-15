@@ -9,7 +9,6 @@ import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -27,10 +26,7 @@ public class SupabaseClient {
     private OkHttpClient httpClient;
     private Handler mainHandler;
 
-    // Remplacez ces valeurs par vos propres clés Supabase
-    private static final String SUPABASE_URL = "https://sidshqdnmtccxgfzzrve.supabase.co";
-    private static final String SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpZHNocWRubXRjY3hnZnp6cnZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1Nzc1ODQsImV4cCI6MjA3MzE1MzU4NH0.vmAZV5pR_p4qun-qgDLQevNdQxmc7zOdamz-f0zFvVc";
-    private static final String SUPABASE_API_URL = SUPABASE_URL + "/rest/v1/";
+    private static final String LOCAL_API_URL = "http://192.168.1.150:8080/api/";
 
     public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
@@ -98,18 +94,26 @@ public class SupabaseClient {
     }
 
     public void select(String table, String select, String filter, SupabaseCallback callback) {
-        String url = SUPABASE_API_URL + table;
+        HttpUrl.Builder urlBuilder = HttpUrl.parse(LOCAL_API_URL + table).newBuilder();
         if (select != null) {
-            url += "?select=" + select;
+            urlBuilder.addQueryParameter("select", select);
         }
         if (filter != null) {
-            url += (select != null ? "&" : "?") + filter;
+            android.util.Log.d("SupabaseClient", "Raw filter: " + filter);
+            String[] pairs = filter.split("&");
+            for (String pair : pairs) {
+                String[] kv = pair.split("=", 2);
+                if (kv.length == 2) {
+                    android.util.Log.d("SupabaseClient", "Adding query param: " + kv[0] + " = " + kv[1]);
+                    urlBuilder.addQueryParameter(kv[0], kv[1]);
+                }
+            }
         }
+        String url = urlBuilder.build().toString();
+        android.util.Log.d("SupabaseClient", "Final URL: " + url);
 
         Request request = new Request.Builder()
                 .url(url)
-                .addHeader("apikey", SUPABASE_ANON_KEY)
-                .addHeader("Authorization", "Bearer " + SUPABASE_ANON_KEY)
                 .addHeader("Content-Type", "application/json")
                 .get()
                 .build();
@@ -144,15 +148,12 @@ public class SupabaseClient {
     }
 
     public void insert(String table, JsonObject data, SupabaseCallback callback) {
-        String url = SUPABASE_API_URL + table;
+        String url = LOCAL_API_URL + table;
 
         RequestBody body = RequestBody.create(gson.toJson(data), JSON);
         Request request = new Request.Builder()
                 .url(url)
-                .addHeader("apikey", SUPABASE_ANON_KEY)
-                .addHeader("Authorization", "Bearer " + SUPABASE_ANON_KEY)
                 .addHeader("Content-Type", "application/json")
-                .addHeader("Prefer", "return=representation")
                 .post(body)
                 .build();
 
@@ -192,7 +193,7 @@ public class SupabaseClient {
     }
 
     public void update(String table, String filter, JsonObject data, SupabaseCallback callback) {
-        String url = SUPABASE_API_URL + table;
+        String url = LOCAL_API_URL + table;
         if (filter != null) {
             url += "?" + filter;
         }
@@ -200,10 +201,7 @@ public class SupabaseClient {
         RequestBody body = RequestBody.create(gson.toJson(data), JSON);
         Request request = new Request.Builder()
                 .url(url)
-                .addHeader("apikey", SUPABASE_ANON_KEY)
-                .addHeader("Authorization", "Bearer " + SUPABASE_ANON_KEY)
                 .addHeader("Content-Type", "application/json")
-                .addHeader("Prefer", "return=representation")
                 .patch(body)
                 .build();
 
@@ -237,15 +235,13 @@ public class SupabaseClient {
     }
 
     public void delete(String table, String filter, SupabaseCallback callback) {
-        String url = SUPABASE_API_URL + table;
+        String url = LOCAL_API_URL + table;
         if (filter != null) {
             url += "?" + filter;
         }
 
         Request request = new Request.Builder()
                 .url(url)
-                .addHeader("apikey", SUPABASE_ANON_KEY)
-                .addHeader("Authorization", "Bearer " + SUPABASE_ANON_KEY)
                 .addHeader("Content-Type", "application/json")
                 .delete()
                 .build();

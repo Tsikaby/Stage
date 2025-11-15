@@ -18,14 +18,19 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.pointage.databinding.FragmentSurveillantBinding;
+import com.example.pointage.ui.historique.HistoriqueViewModel;
+import com.example.pointage.ui.historique.Pointage;
+import com.example.pointage.utils.PdfGenerator;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class SurveillantFragment extends Fragment {
 
     private FragmentSurveillantBinding binding;
     private SurveillantViewModel surveillantViewModel;
     private SurveillantAdapter surveillantAdapter;
+    private HistoriqueViewModel historiqueViewModel;
 
     private static final int REQUEST_WRITE_STORAGE = 112;
 
@@ -34,6 +39,7 @@ public class SurveillantFragment extends Fragment {
                              ViewGroup container, Bundle savedInstanceState) {
 
         surveillantViewModel = new ViewModelProvider(this).get(SurveillantViewModel.class);
+        historiqueViewModel = new ViewModelProvider(requireActivity()).get(HistoriqueViewModel.class);
         binding = FragmentSurveillantBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
@@ -41,12 +47,23 @@ public class SurveillantFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         surveillantAdapter = new SurveillantAdapter(new ArrayList<>());
+        surveillantAdapter.setOnGeneratePdfListener((idSurveillant, nomSurveillant) -> {
+            generatePdfReport(idSurveillant, nomSurveillant);
+        });
         recyclerView.setAdapter(surveillantAdapter);
 
         surveillantViewModel.getSurveillants().observe(getViewLifecycleOwner(), surveillants -> {
             if (surveillants != null) {
                 surveillantAdapter.setSurveillantList(surveillants);
+                // Arrêter l'animation de rafraîchissement
+                binding.swipeRefreshSurveillants.setRefreshing(false);
             }
+        });
+
+        // Configuration du SwipeRefreshLayout
+        binding.swipeRefreshSurveillants.setOnRefreshListener(() -> {
+            // Recharger les surveillants
+            surveillantViewModel.loadSurveillants();
         });
 
         // Set up the SearchView to filter the list
@@ -95,6 +112,21 @@ public class SurveillantFragment extends Fragment {
                 Toast.makeText(getContext(), "Storage permission denied. Cannot save QR code.", Toast.LENGTH_LONG).show();
             }
         }
+    }
+
+    private void generatePdfReport(int idSurveillant, String nomSurveillant) {
+        historiqueViewModel.getAllHistoriqueForPdf(new HistoriqueViewModel.OnHistoriqueLoadedListener() {
+            @Override
+            public void onHistoriqueLoaded(List<Pointage> pointages) {
+                PdfGenerator pdfGenerator = new PdfGenerator(requireContext());
+                pdfGenerator.generateSurveillantReport(nomSurveillant, idSurveillant, pointages, null);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Toast.makeText(requireContext(), "Erreur lors du chargement des données: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override

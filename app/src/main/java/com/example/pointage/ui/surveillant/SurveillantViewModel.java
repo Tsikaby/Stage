@@ -15,10 +15,14 @@ import java.util.List;
 public class SurveillantViewModel extends ViewModel {
 
     private final MutableLiveData<List<Surveillant>> surveillantsLiveData = new MutableLiveData<>();
+    private final SupabaseClient supabaseClient;
 
     public SurveillantViewModel() throws UnknownHostException {
-        SupabaseClient supabaseClient = SupabaseClient.getInstance();
+        supabaseClient = SupabaseClient.getInstance();
+        loadSurveillants();
+    }
 
+    public void loadSurveillants() {
         // Récupérer la collection "surveillant"
         supabaseClient.select("surveillant", "*", null, new SupabaseClient.SupabaseCallback() {
             @Override

@@ -28,4 +28,10 @@
         android:name="com.example.pointage.ui.sanction.SanctionFragment"
         android:label="Sanctions"
         tools:layout="@layout/fragment_sanction" />
+        
+    <fragment
+        android:id="@+id/nav_user_management"
+        android:name="com.example.pointage.ui.usermanagement.UserManagementFragment"
+        android:label="Gestion Utilisateurs"
+        tools:layout="@layout/fragment_user_management" />
 </navigation>

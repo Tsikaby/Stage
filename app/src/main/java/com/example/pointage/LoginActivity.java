@@ -11,17 +11,17 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.pointage.SupabaseClient;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-import java.net.URLEncoder;
 import java.net.UnknownHostException;
+
 
 public class LoginActivity extends AppCompatActivity {
 
     private EditText edtUsername, edtPassword;
     private Button btnLogin;
+    private Button btnSignup;
     private SupabaseClient supabaseClient;
     private Handler mainHandler;
 
@@ -36,12 +36,20 @@ public class LoginActivity extends AppCompatActivity {
             finish();
             return;
         }
+        
+        // Vérifier si l'utilisateur est en attente d'approbation
+        if (prefs.getBoolean("is_pending", false)) {
+            startActivity(new Intent(this, RegisterActivity.class));
+            finish();
+            return;
+        }
 
         setContentView(R.layout.activity_login);
 
         edtUsername = findViewById(R.id.edtUsername);
         edtPassword = findViewById(R.id.edtPassword);
         btnLogin = findViewById(R.id.btnLogin);
+        btnSignup = findViewById(R.id.btnSignup);
 
         try {
             supabaseClient = SupabaseClient.getInstance();
@@ -51,6 +59,7 @@ public class LoginActivity extends AppCompatActivity {
         mainHandler = new Handler(Looper.getMainLooper());
 
         btnLogin.setOnClickListener(v -> loginUser());
+        btnSignup.setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
     }
 
     private void loginUser() {
@@ -62,18 +71,7 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // Encodage des valeurs pour éviter les erreurs avec caractères spéciaux
-        String encodedUsername;
-        String encodedPassword;
-        try {
-            encodedUsername = URLEncoder.encode(username, "UTF-8");
-            encodedPassword = URLEncoder.encode(password, "UTF-8");
-        } catch (Exception e) {
-            encodedUsername = username;
-            encodedPassword = password;
-        }
-
-        String filter = "username=eq." + encodedUsername + "&mdp=eq." + encodedPassword;
+        String filter = "username=eq." + username + "&mdp=eq." + password + "&approved=eq.true";
         System.out.println("Requête filter: " + filter); // Pour déboguer
 
         supabaseClient.select("utilisateurs", "*", filter, new SupabaseClient.SupabaseCallback() {
@@ -81,16 +79,9 @@ public class LoginActivity extends AppCompatActivity {
             public void onSuccess(JsonArray result) {
                 if (result.size() > 0) {
                     // Connexion réussie -> mettre log=true côté base puis poursuivre
-                    String encodedUsername;
-                    try {
-                        encodedUsername = URLEncoder.encode(username, "UTF-8");
-                    } catch (Exception e) {
-                        encodedUsername = username;
-                    }
-
                     JsonObject body = new JsonObject();
                     body.addProperty("log", true);
-                    String updateFilter = "username=eq." + encodedUsername;
+                    String updateFilter = "username=eq." + username;
 
                     supabaseClient.update("utilisateurs", updateFilter, body, new SupabaseClient.SupabaseCallback() {
                         @Override

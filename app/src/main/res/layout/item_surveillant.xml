@@ -3,80 +3,477 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp">
+    android:layout_marginStart="12dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginTop="6dp"
+    android:layout_marginBottom="6dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="6dp"
+    android:backgroundTint="@android:color/white">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:padding="20dp">
 
-        <!-- ID Surveillant -->
-        <TextView
-            android:id="@+id/id_surveillant_text_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ID Surveillant"
-            android:textStyle="bold"
-            android:textSize="18sp"
+        <!-- Badge avec icône utilisateur -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/user_badge"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="3dp"
+            android:backgroundTint="#E8EAF6"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent">
 
-        <!-- Nom -->
-        <TextView
-            android:id="@+id/nom_surveillant_text_view"
-            android:layout_width="wrap_content"
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="👤"
+                android:textSize="28sp"
+                android:gravity="center" />
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Informations du surveillant -->
+        <LinearLayout
+            android:id="@+id/info_layout"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Nom Surveillant"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginTop="6dp"
-            app:layout_constraintTop_toBottomOf="@id/id_surveillant_text_view"
-            app:layout_constraintStart_toStartOf="parent" />
+            android:orientation="vertical"
+            android:layout_marginStart="16dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@id/user_badge"
+            app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Numero_salle -->
-        <TextView
-            android:id="@+id/numero_salle_text_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Numero Salle"
-            android:layout_marginTop="4dp"
-            app:layout_constraintTop_toBottomOf="@id/nom_surveillant_text_view"
-            app:layout_constraintStart_toStartOf="parent" />
+            <!-- ID Badge -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp"
+                android:backgroundTint="#E3F2FD">
 
-        <!-- Contact -->
-        <TextView
-            android:id="@+id/contact_text_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Contact"
-            android:layout_marginTop="4dp"
-            app:layout_constraintTop_toBottomOf="@id/numero_salle_text_view"
-            app:layout_constraintStart_toStartOf="parent" />
+                <TextView
+                    android:id="@+id/id_surveillant_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ID: 001"
+                    android:textStyle="bold"
+                    android:textSize="12sp"
+                    android:textColor="#1976D2"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp" />
 
-        <!-- QR Code -->
-        <ImageView
-            android:id="@+id/qr_code_image_view"
-            android:layout_width="150dp"
-            android:layout_height="150dp"
-            android:layout_marginTop="8dp"
-            android:contentDescription="QR Code"
-            app:layout_constraintTop_toBottomOf="@id/contact_text_view"
+            </androidx.cardview.widget.CardView>
+
+            <!-- Nom -->
+            <TextView
+                android:id="@+id/nom_surveillant_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nom Surveillant"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#1A237E"
+                android:layout_marginTop="8dp"
+                android:maxLines="2"
+                android:ellipsize="end" />
+
+            <!-- Numero_salle -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📍 "
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/numero_salle_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Salle: A101"
+                    android:textSize="14sp"
+                    android:textColor="#616161" />
+
+            </LinearLayout>
+
+            <!-- Contact -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📞 "
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/contact_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Contact"
+                    android:textSize="14sp"
+                    android:textColor="#616161" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Séparateur -->
+        <View
+            android:id="@+id/divider"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginTop="16dp"
+            android:background="#E0E0E0"
+            app:layout_constraintTop_toBottomOf="@id/info_layout"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Bouton Sauvegarde -->
-        <Button
-            android:id="@+id/save_qr_button"
-            android:layout_width="wrap_content"
+        <!-- Section QR Code -->
+        <LinearLayout
+            android:id="@+id/qr_section"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:backgroundTint="@android:color/black"
-            android:text="Save QR Code"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/divider"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/qr_code_image_view" />
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <!-- Container pour le QR Code (initialement caché) -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/qr_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:visibility="gone">
+
+                <!-- Bouton X pour fermer le QR -->
+                <Button
+                    android:id="@+id/close_qr_button"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:text="x"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#F44336"
+                    android:background="@drawable/ic_absence"
+                    style="?android:attr/borderlessButtonStyle"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="8dp" />
+
+                <!-- QR Code avec fond -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="3dp"
+                    android:backgroundTint="#FAFAFA"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
+
+                    <ImageView
+                        android:id="@+id/qr_code_image_view"
+                        android:layout_width="180dp"
+                        android:layout_height="180dp"
+                        android:padding="12dp"
+                        android:contentDescription="QR Code" />
+
+                </androidx.cardview.widget.CardView>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Container pour les boutons d'actions (initialement caché) -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/actions_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:visibility="gone">
+
+                <!-- Bouton X pour fermer les actions -->
+                <Button
+                    android:id="@+id/close_actions_button"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:text="x"
+                    android:textColor="@android:color/black"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#F44336"
+                    android:background="@drawable/ic_absence"
+                    style="?android:attr/borderlessButtonStyle"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="8dp" />
+
+                <!-- Container pour les boutons d'actions -->
+                <LinearLayout
+                    android:id="@+id/actions_buttons_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:layout_marginTop="40dp"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
+
+                <!-- Bouton Sauvegarde -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="4dp"
+                    android:backgroundTint="#1A237E">
+
+                    <Button
+                        android:id="@+id/save_qr_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="💾 Sauvegarder QR Code"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        android:paddingStart="24dp"
+                        android:paddingEnd="24dp"
+                        android:paddingTop="12dp"
+                        android:paddingBottom="12dp"
+                        android:background="@android:color/transparent"
+                        style="?android:attr/borderlessButtonStyle" />
+
+                </androidx.cardview.widget.CardView>
+
+                <!-- Bouton Partager -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="3dp"
+                    android:backgroundTint="#673AB7">
+
+                    <Button
+                        android:id="@+id/toggle_share_button"
+                        style="?android:attr/borderlessButtonStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@android:color/transparent"
+                        android:paddingStart="20dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="20dp"
+                        android:paddingBottom="10dp"
+                        android:text="📧 Partager QR Code"
+                        android:textColor="@android:color/white"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                </androidx.cardview.widget.CardView>
+
+                <!-- Bouton Générer PDF -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="3dp"
+                    android:backgroundTint="#4CAF50">
+
+                    <Button
+                        android:id="@+id/generate_pdf_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📄 Générer rapport PDF"
+                        android:textColor="@android:color/white"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:paddingStart="20dp"
+                        android:paddingEnd="20dp"
+                        android:paddingTop="10dp"
+                        android:paddingBottom="10dp"
+                        android:background="@android:color/transparent"
+                        style="?android:attr/borderlessButtonStyle" />
+
+                </androidx.cardview.widget.CardView>
+
+                </LinearLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Boutons d'affichage -->
+            <LinearLayout
+                android:id="@+id/buttons_row"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="16dp">
+
+                <!-- Bouton Afficher QR Code -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="3dp"
+                    android:backgroundTint="#2196F3">
+
+                    <Button
+                        android:id="@+id/show_qr_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📱 QR Code"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        android:paddingStart="20dp"
+                        android:paddingEnd="20dp"
+                        android:paddingTop="10dp"
+                        android:paddingBottom="10dp"
+                        android:background="@android:color/transparent"
+                        style="?android:attr/borderlessButtonStyle" />
+
+                </androidx.cardview.widget.CardView>
+
+                <!-- Bouton Afficher Actions -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="3dp"
+                    android:backgroundTint="#FF9800">
+
+                    <Button
+                        android:id="@+id/show_actions_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⚙️ Actions"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        android:paddingStart="20dp"
+                        android:paddingEnd="20dp"
+                        android:paddingTop="10dp"
+                        android:paddingBottom="10dp"
+                        android:background="@android:color/transparent"
+                        style="?android:attr/borderlessButtonStyle" />
+
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+
+            <!-- Boutons de partage en ligne (initialement cachés) -->
+            <LinearLayout
+                android:id="@+id/share_buttons_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="8dp"
+                android:visibility="gone">
+
+                <!-- WhatsApp -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="4dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="3dp"
+                    android:backgroundTint="#25D366">
+
+                    <Button
+                        android:id="@+id/share_whatsapp_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="WhatsApp"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
+                        android:background="@android:color/transparent"
+                        style="?android:attr/borderlessButtonStyle" />
+
+                </androidx.cardview.widget.CardView>
+
+                <!-- Messenger -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="4dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="3dp"
+                    android:backgroundTint="#0084FF">
+
+                    <Button
+                        android:id="@+id/share_messenger_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Messenger"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
+                        android:background="@android:color/transparent"
+                        style="?android:attr/borderlessButtonStyle" />
+
+                </androidx.cardview.widget.CardView>
+
+                <!-- Email -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="4dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="3dp"
+                    android:backgroundTint="#EA4335">
+
+                    <Button
+                        android:id="@+id/share_email_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Email"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
+                        android:background="@android:color/transparent"
+                        style="?android:attr/borderlessButtonStyle" />
+
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+
+
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

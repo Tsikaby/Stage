@@ -1,6 +1,7 @@
 package com.example.pointage.ui.historique;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,6 +40,10 @@ public class HistoriqueFragment extends Fragment implements HistoriqueAdapter.On
 
         // Use Activity-scoped ViewModel to share updates between Activity and Fragment
         historiqueViewModel = new ViewModelProvider(requireActivity()).get(HistoriqueViewModel.class);
+        // Initialiser SharedPreferences pour la persistance des notifications affichées
+        if (getContext() != null) {
+            historiqueViewModel.initializeSharedPreferences(getContext());
+        }
 
         // --- RecyclerView ---
         historiqueAdapter = new HistoriqueAdapter(new ArrayList<>(), this);
@@ -47,6 +52,7 @@ public class HistoriqueFragment extends Fragment implements HistoriqueAdapter.On
 
         // --- Observer ---
         historiqueViewModel.getHistorique().observe(getViewLifecycleOwner(), historiqueList -> {
+            Log.d("HistoriqueFragment", "Observer triggered with " + (historiqueList != null ? historiqueList.size() : "null") + " items");
             if (historiqueList != null) {
                 historiqueAdapter.setHistoriqueList(historiqueList);
             }

@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 
 public class DateUtils {
 
@@ -12,32 +13,73 @@ public class DateUtils {
         if (timestampStr == null) throw new ParseException("Null timestamp", 0);
         String ts = timestampStr.trim();
 
-        // Try ISO 8601 without timezone: yyyy-MM-dd'T'HH:mm:ss
-        try {
-            SimpleDateFormat isoNoTz = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
-            isoNoTz.setLenient(false);
-            return isoNoTz.parse(ts.length() >= 19 ? ts.substring(0, 19) : ts);
-        } catch (ParseException ignored) {}
+        // Try ISO 8601 with timezone (with and without milliseconds)
+        if (ts.endsWith("Z") || ts.endsWith("z") || ts.matches(".*[+-]\\d{2}:?\\d{2}$")) {
+            ParseException last = null;
+            for (String pattern : new String[]{
+                    "yyyy-MM-dd'T'HH:mm:ss.SSSX",
+                    "yyyy-MM-dd'T'HH:mm:ssX"
+            }) {
+                try {
+                    SimpleDateFormat fmt = new SimpleDateFormat(pattern, Locale.getDefault());
+                    fmt.setLenient(false);
+                    return fmt.parse(ts);
+                } catch (ParseException e) { last = e; }
+            }
+            if (last != null) throw last;
+        }
 
-        // Try ISO 8601 with 'Z' or timezone: yyyy-MM-dd'T'HH:mm:ssX
-        try {
-            SimpleDateFormat isoTz = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.getDefault());
-            isoTz.setLenient(false);
-            return isoTz.parse(ts);
-        } catch (ParseException ignored) {}
+        // Then try ISO 8601 without timezone (with and without milliseconds)
+        ParseException lastNoTz = null;
+        for (String pattern : new String[]{
+                "yyyy-MM-dd'T'HH:mm:ss.SSS",
+                "yyyy-MM-dd'T'HH:mm:ss"
+        }) {
+            try {
+                SimpleDateFormat isoNoTz = new SimpleDateFormat(pattern, Locale.getDefault());
+                isoNoTz.setLenient(false);
+                // If input longer, trim to pattern length safely
+                int maxLen = pattern.length();
+                String candidate = ts;
+                if (candidate.length() > 19 && pattern.endsWith(".SSS")) {
+                    // keep milliseconds if present
+                } else if (candidate.length() > 19) {
+                    candidate = candidate.substring(0, 19);
+                }
+                return isoNoTz.parse(candidate);
+            } catch (ParseException e) { lastNoTz = e; }
+        }
 
-        // Fallback: space separated
+        // Fallback: space separated (with and without milliseconds)
         try {
-            SimpleDateFormat space = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-            space.setLenient(false);
-            return space.parse(ts.replace('T', ' ').length() >= 19 ? ts.replace('T', ' ').substring(0, 19) : ts.replace('T', ' '));
+            String spaceStr = ts.replace('T', ' ');
+            ParseException last = null;
+            for (String pattern : new String[]{
+                    "yyyy-MM-dd HH:mm:ss.SSS",
+                    "yyyy-MM-dd HH:mm:ss"
+            }) {
+                try {
+                    SimpleDateFormat space = new SimpleDateFormat(pattern, Locale.getDefault());
+                    space.setLenient(false);
+                    String candidate = spaceStr;
+                    if (candidate.length() > 19 && pattern.endsWith(".SSS")) {
+                        // ok
+                    } else if (candidate.length() > 19) {
+                        candidate = candidate.substring(0, 19);
+                    }
+                    return space.parse(candidate);
+                } catch (ParseException e) { last = e; }
+            }
+            throw last != null ? last : new ParseException("Unparseable timestamp", 0);
         } catch (ParseException e) {
             throw e;
         }
     }
 
     public static String formatForSupabase(Date date) {
+        // Conserver un timestamp sans fuseau pour correspondre aux colonnes timestamp (sans tz)
         SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
+        isoFormat.setLenient(false);
         return isoFormat.format(date);
     }
 
@@ -63,8 +105,13 @@ public class DateUtils {
     }
 
     public static String getCurrentDateString() {
+        return formatDateOnly(new Date());
+    }
+
+    public static String formatDateOnly(Date date) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        return dateFormat.format(new Date());
+        dateFormat.setTimeZone(TimeZone.getTimeZone("Indian/Antananarivo"));
+        return dateFormat.format(date);
     }
 
     public static String getSession() {

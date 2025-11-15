@@ -6,23 +6,28 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_home"
-            android:icon="?attr/actionModeCloseDrawable"
+            android:icon="@drawable/ic_home"
             android:title="@string/menu_home" />
         <item
             android:id="@+id/nav_surveillant"
-            android:icon="?attr/actionModePasteDrawable"
+            android:icon="@drawable/ic_surveillant"
             android:title="Surveillant" />
         <item
             android:id="@+id/nav_historique"
-            android:icon="@android:drawable/ic_menu_recent_history"
+            android:icon="@drawable/ic_historique"
             android:title="Historique" />
         <item
             android:id="@+id/nav_sanction"
-            android:icon="@android:drawable/ic_dialog_dialer"
+            android:icon="@drawable/ic_sanction"
             android:title="Sanctions" />
         <item
+            android:id="@+id/nav_user_management"
+            android:icon="@drawable/ic_surveillant"
+            android:title="Gestion Utilisateurs"
+            android:visible="false" />
+        <item
             android:id="@+id/nav_logout"
-            android:icon="@android:drawable/ic_menu_close_clear_cancel"
+            android:icon="@drawable/ic_logout"
             android:title="Se déconnecter" />
     </group>
 </menu>
