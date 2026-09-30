@@ -10,7 +10,7 @@ import android.content.pm.PackageManager;
 
 import com.example.pointage.databinding.ActivityMainBinding;
 import com.example.pointage.ui.historique.HistoriqueViewModel;
-import com.example.pointage.utils.EmailUtility;
+
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -241,7 +241,7 @@ public class MainActivity extends AppCompatActivity {
             forceAbsenceCheck();
             return true;
         } else if (item.getItemId() == R.id.action_test_email) {
-            testEmailSending();
+
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -260,20 +260,7 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void testEmailSending() {
-        new AlertDialog.Builder(this)
-                .setTitle("Test Email")
-                .setMessage("Envoyer un email de test à jeanbaptiste45522@gmail.com ?")
-                .setPositiveButton("Envoyer", (dialog, which) -> {
-                    String testEmail = "jeanbaptiste45522@gmail.com";
-                    EmailUtility.sendTestEmail(testEmail);
-                    Snackbar.make(binding.getRoot(), "Email de test envoyé à " + testEmail + ". Vérifiez votre boîte mail.", Snackbar.LENGTH_LONG)
-                            .setAnchorView(R.id.fab).show();
-                    Log.i("MainActivity", "Test email envoyé à " + testEmail);
-                })
-                .setNegativeButton("Annuler", (dialog, which) -> dialog.dismiss())
-                .show();
-    }
+
 
     private void checkUserRoleAndShowAdminMenu(NavigationView navigationView) {
         String username = getSharedPreferences("login", MODE_PRIVATE).getString("username", null);
