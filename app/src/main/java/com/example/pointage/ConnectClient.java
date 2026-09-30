@@ -21,18 +21,18 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.dnsoverhttps.DnsOverHttps;
 
-public class SupabaseClient {
-    private static SupabaseClient instance;
+public class ConnectClient {
+    private static ConnectClient instance;
     private OkHttpClient httpClient;
     private Handler mainHandler;
 
-    private static final String LOCAL_API_URL = "http://192.168.1.150:8080/api/";
+    private static final String LOCAL_API_URL = "http://10.0.0.28:8080/api/";
 
     public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
     private Gson gson;
 
-    private SupabaseClient() throws UnknownHostException {
+    private ConnectClient() throws UnknownHostException {
         // Bootstrap client pour DoH avec timeouts courts
         OkHttpClient bootstrapClient = new OkHttpClient.Builder()
                 .connectTimeout(5, TimeUnit.SECONDS)
@@ -86,14 +86,14 @@ public class SupabaseClient {
         mainHandler = new Handler(Looper.getMainLooper());
     }
 
-    public static synchronized SupabaseClient getInstance() throws UnknownHostException {
+    public static synchronized ConnectClient getInstance() throws UnknownHostException {
         if (instance == null) {
-            instance = new SupabaseClient();
+            instance = new ConnectClient();
         }
         return instance;
     }
 
-    public void select(String table, String select, String filter, SupabaseCallback callback) {
+    public void select(String table, String select, String filter, ClientCallback callback) {
         HttpUrl.Builder urlBuilder = HttpUrl.parse(LOCAL_API_URL + table).newBuilder();
         if (select != null) {
             urlBuilder.addQueryParameter("select", select);
@@ -147,7 +147,7 @@ public class SupabaseClient {
         });
     }
 
-    public void insert(String table, JsonObject data, SupabaseCallback callback) {
+    public void insert(String table, JsonObject data, ClientCallback callback) {
         String url = LOCAL_API_URL + table;
 
         RequestBody body = RequestBody.create(gson.toJson(data), JSON);
@@ -192,7 +192,7 @@ public class SupabaseClient {
         });
     }
 
-    public void update(String table, String filter, JsonObject data, SupabaseCallback callback) {
+    public void update(String table, String filter, JsonObject data, ClientCallback callback) {
         String url = LOCAL_API_URL + table;
         if (filter != null) {
             url += "?" + filter;
@@ -234,7 +234,7 @@ public class SupabaseClient {
         });
     }
 
-    public void delete(String table, String filter, SupabaseCallback callback) {
+    public void delete(String table, String filter, ClientCallback callback) {
         String url = LOCAL_API_URL + table;
         if (filter != null) {
             url += "?" + filter;
@@ -269,7 +269,7 @@ public class SupabaseClient {
         });
     }
 
-    public interface SupabaseCallback {
+    public interface ClientCallback {
         void onSuccess(JsonArray result) throws UnknownHostException;
         void onError(Exception error);
     }

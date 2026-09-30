@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- Palette professionnelle pour dark mode -->
+    <color name="primary_color">#60A5FA</color>
+    <color name="primary_light">#1E3A8A</color>
+    <color name="primary_dark">#93C5FD</color>
+    <color name="secondary_color">#A5B4FC</color>
+    <color name="secondary_light">#4F46E5</color>
+    <color name="tertiary_color">#E5E7EB</color>
+    
+    <!-- Notifications - Couleurs sémantiques pour dark mode -->
+    <color name="retard_color">#FBBF24</color>
+    <color name="retard_light">#78350F</color>
+    <color name="absence_color">#F87171</color>
+    <color name="absence_light">#7F1D1D</color>
+    <color name="presence_color">#6EE7B7</color>
+    <color name="presence_light">#064E3B</color>
+    <color name="pending_color">#60A5FA</color>
+    <color name="pending_light">#0C2D3D</color>
+    
+    <!-- Surfaces et arrière-plans pour dark mode -->
+    <color name="background_light">#0F172A</color>
+    <color name="card_background">#1E293B</color>
+    <color name="surface_light">#334155</color>
+    <color name="surface_hover">#475569</color>
+    
+    <!-- Texte pour dark mode -->
+    <color name="text_primary">#F1F5F9</color>
+    <color name="text_secondary">#CBD5E1</color>
+    <color name="text_tertiary">#94A3B8</color>
+    <color name="text_on_primary">#0F172A</color>
+    
+    <!-- Bordures et séparations pour dark mode -->
+    <color name="divider">#334155</color>
+    <color name="border_subtle">#1E293B</color>
+    
+    <!-- Légacé (compatibilité) -->
+    <color name="colorPrimaryLight">@color/primary_light</color>
+    <color name="colorPrimary">@color/primary_color</color>
+    <color name="colorPrimaryDark">@color/primary_dark</color>
+    <color name="colorAccent">@color/secondary_color</color>
+</resources>

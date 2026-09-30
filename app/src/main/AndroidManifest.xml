@@ -19,9 +19,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
-        android:label="POINTAGE"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:icon="@drawable/eni_logo"
+        android:label="S-Pointage"
+        android:roundIcon="@drawable/eni_logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.POINTAGE"
         android:usesCleartextTraffic="true"
@@ -32,7 +32,7 @@
         <activity
             android:name=".LoginActivity"
             android:exported="true"
-            android:label="POINTAGE"
+            android:label="S-Pointage"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.POINTAGE.NoActionBar">
             <intent-filter>
@@ -45,7 +45,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="POINTAGE"
+            android:label="S-Pointage"
             android:screenOrientation="sensor"
             android:theme="@style/Theme.POINTAGE.NoActionBar"/>
 

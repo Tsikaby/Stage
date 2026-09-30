@@ -18,6 +18,12 @@
         tools:layout="@layout/fragment_surveillant" />
 
     <fragment
+        android:id="@+id/nav_pending"
+        android:name="com.example.pointage.ui.pending.PendingFragment"
+        android:label="À pointer aujourd'hui"
+        tools:layout="@layout/fragment_pending" />
+
+    <fragment
         android:id="@+id/nav_historique"
         android:name="com.example.pointage.ui.historique.HistoriqueFragment"
         android:label="Historique"

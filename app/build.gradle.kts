@@ -32,6 +32,19 @@ android {
     buildFeatures {
         viewBinding = true
     }
+    
+    packaging {
+        resources {
+            excludes += setOf(
+                "META-INF/LICENSE.md",
+                "META-INF/LICENSE",
+                "META-INF/NOTICE.md",
+                "META-INF/NOTICE",
+                "META-INF/*.md",
+                "META-INF/*.txt"
+            )
+        }
+    }
 }
 dependencies {
     implementation(libs.appcompat)
@@ -54,4 +67,6 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
     implementation(libs.zxing.android.embedded)
     implementation("androidx.work:work-runtime:2.8.1")
+    implementation("com.sun.mail:android-mail:1.6.7")
+    implementation("com.sun.mail:android-activation:1.6.7")
     }

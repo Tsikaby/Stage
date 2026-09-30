@@ -22,7 +22,7 @@ public class LoginActivity extends AppCompatActivity {
     private EditText edtUsername, edtPassword;
     private Button btnLogin;
     private Button btnSignup;
-    private SupabaseClient supabaseClient;
+    private ConnectClient connectClient;
     private Handler mainHandler;
 
     @Override
@@ -52,7 +52,7 @@ public class LoginActivity extends AppCompatActivity {
         btnSignup = findViewById(R.id.btnSignup);
 
         try {
-            supabaseClient = SupabaseClient.getInstance();
+            connectClient = ConnectClient.getInstance();
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);
         }
@@ -74,7 +74,7 @@ public class LoginActivity extends AppCompatActivity {
         String filter = "username=eq." + username + "&mdp=eq." + password + "&approved=eq.true";
         System.out.println("Requête filter: " + filter); // Pour déboguer
 
-        supabaseClient.select("utilisateurs", "*", filter, new SupabaseClient.SupabaseCallback() {
+        connectClient.select("utilisateurs", "*", filter, new ConnectClient.ClientCallback() {
             @Override
             public void onSuccess(JsonArray result) {
                 if (result.size() > 0) {
@@ -83,7 +83,7 @@ public class LoginActivity extends AppCompatActivity {
                     body.addProperty("log", true);
                     String updateFilter = "username=eq." + username;
 
-                    supabaseClient.update("utilisateurs", updateFilter, body, new SupabaseClient.SupabaseCallback() {
+                    connectClient.update("utilisateurs", updateFilter, body, new ConnectClient.ClientCallback() {
                         @Override
                         public void onSuccess(JsonArray updateResult) {
                             // Persistance locale

@@ -6,6 +6,10 @@
         android:title="Vérifier absences"
         app:showAsAction="never" />
     <item
+        android:id="@+id/action_test_email"
+        android:title="Test Email"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_logout"
         android:title="Se déconnecter"
         app:showAsAction="never" />

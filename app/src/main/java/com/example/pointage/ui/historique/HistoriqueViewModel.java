@@ -10,9 +10,10 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.example.pointage.SupabaseClient;
+import com.example.pointage.ConnectClient;
 import com.example.pointage.ui.historique.DateUtils;
 import com.example.pointage.utils.NotificationHelper;
+import com.example.pointage.utils.EmailUtility;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.Gson;
@@ -49,7 +50,7 @@ public class HistoriqueViewModel extends ViewModel {
     }
 
     private final MutableLiveData<List<Pointage>> historiqueLiveData = new MutableLiveData<>();
-    private final SupabaseClient supabaseClient = SupabaseClient.getInstance();
+    private final ConnectClient connectClient = ConnectClient.getInstance();
     private final Handler absenceCheckHandler = new Handler(Looper.getMainLooper());
     private final Map<String, Runnable> scheduledAbsenceChecks = new HashMap<>();
 
@@ -176,7 +177,7 @@ public class HistoriqueViewModel extends ViewModel {
                 + "&order=heure_pointage.desc";
         Log.d("HistoriqueViewModel", "Filter string: " + filter);
 
-        supabaseClient.select("pointage", "*", filter, new SupabaseClient.SupabaseCallback() {
+        connectClient.select("pointage", "*", filter, new ConnectClient.ClientCallback() {
             @Override
             public void onSuccess(JsonArray result) {
                 Log.d("HistoriqueViewModel", "loadHistorique: received " + result.size() + " pointages from Supabase");
@@ -242,7 +243,7 @@ public class HistoriqueViewModel extends ViewModel {
         // On filtre directement par id_surveillant
         String planningFilter = "id_surveillant=eq." + idSurveillant;
 
-        supabaseClient.select("planning_surveillance", "*", planningFilter, new SupabaseClient.SupabaseCallback() {
+        connectClient.select("planning_surveillance", "*", planningFilter, new ConnectClient.ClientCallback() {
             @Override
             public void onSuccess(JsonArray planningResult) {
                 Log.d("HistoriqueViewModel", "planningResult.size()=" + planningResult.size());
@@ -413,7 +414,7 @@ public class HistoriqueViewModel extends ViewModel {
                 long finalEarliestStartMs = earliestStartMs;
                 long finalLatestEndMs = latestEndMs;
                 long finalLatestEndMs1 = latestEndMs;
-                supabaseClient.select("pointage", "*", pointageFilter, new SupabaseClient.SupabaseCallback() {
+                connectClient.select("pointage", "*", pointageFilter, new ConnectClient.ClientCallback() {
                     @Override
                     public void onSuccess(JsonArray pointageResult) {
                         // Vérifier si un pointage existe déjà pour cette session
@@ -463,11 +464,13 @@ public class HistoriqueViewModel extends ViewModel {
                             Date now = new Date();
                             if (now.getTime() > finalLatestEndMs1) {
                                 final String absenceDate = currentDate;
-                                checkAndInsertSanction(idSurveillant, "ABSENCE", currentDate, matchedSalleHolder[0], session, nomSurveillant, new SupabaseClient.SupabaseCallback() {
+                                checkAndInsertSanction(idSurveillant, "ABSENCE", currentDate, matchedSalleHolder[0], session, nomSurveillant, new ConnectClient.ClientCallback() {
                                     @Override public void onSuccess(JsonArray result) {
                                         Log.i("HistoriqueViewModel", "Absence enregistrée automatiquement: surveillant " + idSurveillant + " - " + session);
                                         // ✅ Afficher notification de l'absence (une seule fois, persistante après redémarrage)
                                         NotificationHelper.showAbsenceNotification(idSurveillant, nomSurveillant, matchedSalleHolder[0], session, absenceDate);
+                                        // ✅ Envoyer email de notification d'absence
+                                        fetchSurveillantEmailAndSendNotification(idSurveillant, nomSurveillant, absenceDate, "ABSENCE");
                                     }
                                     @Override public void onError(Exception e) { e.printStackTrace(); }
                                 });
@@ -485,16 +488,18 @@ public class HistoriqueViewModel extends ViewModel {
                         newPointageData.addProperty("retard", isRetard);
                         newPointageData.addProperty("numero_salle", matchedSalleHolder[0]);
 
-                        supabaseClient.insert("pointage", newPointageData, new SupabaseClient.SupabaseCallback() {
+                        connectClient.insert("pointage", newPointageData, new ConnectClient.ClientCallback() {
                             @Override
                             public void onSuccess(JsonArray insertResult) {
                                 // Enregistrer le retard si nécessaire
                                 if (isRetard) {
                                     final String retardDate = currentDate;
-                                    checkAndInsertSanction(idSurveillant, "RETARD", currentDate, matchedSalleHolder[0], session, nomSurveillant, new SupabaseClient.SupabaseCallback() {
+                                    checkAndInsertSanction(idSurveillant, "RETARD", currentDate, matchedSalleHolder[0], session, nomSurveillant, new ConnectClient.ClientCallback() {
                                         @Override public void onSuccess(JsonArray result) {
                                             // ✅ Afficher notification du retard (une seule fois, persistante après redémarrage)
                                             NotificationHelper.showRetardNotification(idSurveillant, nomSurveillant, matchedSalleHolder[0], retardDate);
+                                            // ✅ Envoyer email de notification de retard
+                                            fetchSurveillantEmailAndSendNotification(idSurveillant, nomSurveillant, retardDate, "RETARD");
                                         }
                                         @Override public void onError(Exception e) { e.printStackTrace(); }
                                     });
@@ -542,7 +547,7 @@ public class HistoriqueViewModel extends ViewModel {
         // Charger TOUS les pointages sans filtre de date
         String filter = "order=heure_pointage.desc";
 
-        supabaseClient.select("pointage", "*", filter, new SupabaseClient.SupabaseCallback() {
+        connectClient.select("pointage", "*", filter, new ConnectClient.ClientCallback() {
             @Override
             public void onSuccess(JsonArray result) {
                 List<Pointage> allPointages = new ArrayList<>();
@@ -584,10 +589,10 @@ public class HistoriqueViewModel extends ViewModel {
         });
     }
 
-    private void checkAndInsertSanction(long idSurveillant, String typeSanction, String dateExamen, String numeroSalle, String session, String nomSurveillant, SupabaseClient.SupabaseCallback callback) {
+    private void checkAndInsertSanction(long idSurveillant, String typeSanction, String dateExamen, String numeroSalle, String session, String nomSurveillant, ConnectClient.ClientCallback callback) {
         // Check if sanction already exists
         String filter = "id_surveillant=eq." + idSurveillant + "&type=eq." + typeSanction + "&date_examen=eq." + dateExamen + "&numero_salle=eq." + numeroSalle + "&session=eq." + session;
-        supabaseClient.select("sanction", "*", filter, new SupabaseClient.SupabaseCallback() {
+        connectClient.select("sanction", "*", filter, new ConnectClient.ClientCallback() {
             @Override
             public void onSuccess(JsonArray result) {
                 if (result.size() == 0) {
@@ -602,7 +607,7 @@ public class HistoriqueViewModel extends ViewModel {
                     // date_creation comme TIME (HH:mm:ss) pas timestamp complet
                     String currentTime = new java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(new Date());
                     sanctionData.addProperty("date_creation", currentTime);
-                    supabaseClient.insert("sanction", sanctionData, callback);
+                    connectClient.insert("sanction", sanctionData, callback);
                 } else {
                     // Already exists, do nothing
                     try {
@@ -616,6 +621,68 @@ public class HistoriqueViewModel extends ViewModel {
             @Override
             public void onError(Exception e) {
                 if (callback != null) callback.onError(e);
+            }
+        });
+    }
+
+    private void fetchSurveillantEmailAndSendNotification(Long idSurveillant, String nomSurveillant, String date, String type) {
+        Log.i("HistoriqueViewModel", "Début envoi email - ID: " + idSurveillant + ", Nom: " + nomSurveillant + ", Type: " + type + ", Date: " + date);
+        String filter = "id_surveillant=eq." + idSurveillant;
+        connectClient.select("surveillant", "*", filter, new ConnectClient.ClientCallback() {
+            @Override
+            public void onSuccess(JsonArray result) {
+                try {
+                    Log.i("HistoriqueViewModel", "Résultat surveillant: " + result.size() + " enregistrements trouvés");
+                    if (result.size() > 0) {
+                        JsonObject doc = result.get(0).getAsJsonObject();
+                        Log.i("HistoriqueViewModel", "Données surveillant: " + doc.toString());
+                        String email = null;
+                        if (doc.has("email") && !doc.get("email").isJsonNull()) {
+                            email = doc.get("email").getAsString();
+                        }
+
+                        final String finalEmail = email;
+                        Log.i("HistoriqueViewModel", "Email récupéré: " + finalEmail);
+                        if (finalEmail != null && !finalEmail.isEmpty()) {
+                            if ("ABSENCE".equals(type)) {
+                                Log.i("HistoriqueViewModel", "Envoi email d'absence à " + finalEmail);
+                                EmailUtility.sendAbsenceNotification(finalEmail, nomSurveillant, date, new EmailUtility.EmailCallback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        Log.i("HistoriqueViewModel", "Email d'absence envoyé avec succès à " + finalEmail);
+                                    }
+                                    @Override
+                                    public void onError(String error) {
+                                        Log.e("HistoriqueViewModel", "Erreur envoi email absence: " + error);
+                                    }
+                                });
+                            } else if ("RETARD".equals(type)) {
+                                Log.i("HistoriqueViewModel", "Envoi email de retard à " + finalEmail);
+                                EmailUtility.sendLateNotification(finalEmail, nomSurveillant, date, new EmailUtility.EmailCallback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        Log.i("HistoriqueViewModel", "Email de retard envoyé avec succès à " + finalEmail);
+                                    }
+                                    @Override
+                                    public void onError(String error) {
+                                        Log.e("HistoriqueViewModel", "Erreur envoi email retard: " + error);
+                                    }
+                                });
+                            }
+                        } else {
+                            Log.w("HistoriqueViewModel", "Aucun email disponible pour le surveillant " + idSurveillant + " (" + nomSurveillant + ")");
+                        }
+                    } else {
+                        Log.w("HistoriqueViewModel", "Aucun surveillant trouvé avec ID: " + idSurveillant);
+                    }
+                } catch (Exception e) {
+                    Log.e("HistoriqueViewModel", "Erreur lors de la récupération de l'email du surveillant", e);
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.e("HistoriqueViewModel", "Erreur lors de la récupération des données du surveillant", e);
             }
         });
     }
@@ -641,7 +708,7 @@ public class HistoriqueViewModel extends ViewModel {
         String surveillantIdsStr = String.join(",", surveillantIds.stream().map(String::valueOf).toArray(String[]::new));
         String filter = "id_surveillant=in.(" + surveillantIdsStr + ")";
 
-        supabaseClient.select("surveillant", "*", filter, new SupabaseClient.SupabaseCallback() {
+        connectClient.select("surveillant", "*", filter, new ConnectClient.ClientCallback() {
             @Override
             public void onSuccess(JsonArray result) {
                 Log.d("HistoriqueViewModel", "fetchSurveillantDataAndBind: received " + result.size() + " surveillants");
@@ -693,7 +760,7 @@ public class HistoriqueViewModel extends ViewModel {
     public void deletePointage(String documentId, OnDeleteListener listener) {
         String filter = "id_pointage=eq." + documentId;
 
-        supabaseClient.delete("pointage", filter, new SupabaseClient.SupabaseCallback() {
+        connectClient.delete("pointage", filter, new ConnectClient.ClientCallback() {
             @Override
             public void onSuccess(JsonArray result) {
                 if (listener != null) listener.onSuccess();
@@ -770,7 +837,7 @@ public class HistoriqueViewModel extends ViewModel {
         String planningFilter = "date_examen=gte." + startStr + "&date_examen=lte." + todayStr;
         Log.d("HistoriqueViewModel", "Filtre planning: " + planningFilter);
 
-        supabaseClient.select("planning_surveillance", "*", planningFilter, new SupabaseClient.SupabaseCallback() {
+        connectClient.select("planning_surveillance", "*", planningFilter, new ConnectClient.ClientCallback() {
             @Override
             public void onSuccess(JsonArray planningResult) {
                 Log.i("HistoriqueViewModel", "Récupéré " + planningResult.size() + " entrées de planning à traiter");
@@ -836,7 +903,7 @@ public class HistoriqueViewModel extends ViewModel {
                                     + "&heure_pointage=lte." + dayEnd;
 
                             final String sessionFinal = session;
-                            supabaseClient.select("pointage", "*", pointageFilter, new SupabaseClient.SupabaseCallback() {
+                            connectClient.select("pointage", "*", pointageFilter, new ConnectClient.ClientCallback() {
                                 @Override
                                 public void onSuccess(JsonArray pointageResult) {
                                     boolean hasPointageInSession = false;
@@ -857,19 +924,22 @@ public class HistoriqueViewModel extends ViewModel {
                                     if (!hasPointageInSession) {
                                         Log.w("HistoriqueViewModel", "ABSENCE DÉTECTÉE - Surveillant ID: " + surveillantId + ", Date: " + dateExamenStr + ", Session: " + sessionFinal + ", Salle: " + numeroSalle);
                                         // Récupérer le nom du surveillant
-                                        supabaseClient.select("surveillant", "nom_surveillant", "id_surveillant=eq." + surveillantId, new SupabaseClient.SupabaseCallback() {
+                                        connectClient.select("surveillant", "nom_surveillant", "id_surveillant=eq." + surveillantId, new ConnectClient.ClientCallback() {
                                             @Override
                                             public void onSuccess(JsonArray surveillantResult) {
                                                 if (surveillantResult.size() > 0) {
                                                     String nomSurveillant = surveillantResult.get(0).getAsJsonObject().get("nom_surveillant").getAsString();
                                                     // Enregistrer l'absence immédiatement
-                                                    checkAndInsertSanction(surveillantId, "ABSENCE", dateExamenStr, numeroSalle, sessionFinal, nomSurveillant, new SupabaseClient.SupabaseCallback() {
+                                                    checkAndInsertSanction(surveillantId, "ABSENCE", dateExamenStr, numeroSalle, sessionFinal, nomSurveillant, new ConnectClient.ClientCallback() {
                                                         @Override
                                                         public void onSuccess(JsonArray result) {
                                                             Log.i("HistoriqueViewModel", "✅ ABSENCE ENREGISTRÉE: " + nomSurveillant + " - " + sessionFinal + " - Salle " + numeroSalle + " - " + dateExamenStr);
                                                             // ✅ Afficher notification de l'absence (une seule fois, persistante après redémarrage)
                                                             final String absenceDate = dateExamenStr;
                                                             NotificationHelper.showAbsenceNotification(surveillantId, nomSurveillant, numeroSalle, sessionFinal, absenceDate);
+                                                            // ✅ Envoyer email de notification d'absence
+                                                            Log.i("HistoriqueViewModel", "📧 DÉCLENCHEMENT ENVOI EMAIL pour absence: " + nomSurveillant + " (ID: " + surveillantId + ")");
+                                                            fetchSurveillantEmailAndSendNotification(surveillantId, nomSurveillant, absenceDate, "ABSENCE");
                                                         }
 
 

@@ -1,0 +1,50 @@
+{
+    "checksum": "9ee7942c433cb9a58ed81ad252e6c33b835d0cf8940eb273de9b049f7fce5a8a",
+    "data": {
+    "id": "3100626a-94cb-4f4e-ab67-33d23674a86d",
+    "createdAt": 1760519940281,
+    "updatedAt": 1760519961229,
+    "title": "il y a des surveillants lanifier dans lanning s...",
+    "messages": [
+        {
+            "id": "e99a8e25-8359-4e55-8481-978cc06fa1b7",
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "il y a des surveillants planifier dans planningsurveillance qui n'ont pas fait de pointage mais ils ne sont pas marques comme absent et les notifications ne s'affichent plus"
+                }
+            ],
+            "context": {
+                "codebaseEnabled": true
+            },
+            "createdAt": 1760519961229,
+            "isInternal": false,
+            "rawContent": {
+                "type": "doc",
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "il y a des surveillants planifier dans planningsurveillance qui n'ont pas fait de pointage mais ils ne sont pas marques comme absent et les notifications ne s'affichent plus"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "autoAppliedRules": []
+        }
+    ],
+    "isAgent": true,
+    "isNameGenerated": true,
+    "isCustomAgent": false,
+    "isUnitTestsAgent": false,
+    "isE2EAgent": false,
+    "isWebDevAgent": false,
+    "isQnaAgent": false,
+    "isRepoInfoAgent": false,
+    "model": "default"
+}
+}

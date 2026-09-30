@@ -1,0 +1,74 @@
+{
+    "checksum": "4cd439833edbd1af761f0d061beb465e1ab7bd7607fbc80029e3e162d5fa996c",
+    "data": {
+    "id": "dbc85997-f912-42fb-bc1a-b7e5ee60e9d0",
+    "createdAt": 1763538162182,
+    "updatedAt": 1763538541870,
+    "title": "ameliore les effets visules de mon interface",
+    "messages": [
+        {
+            "id": "134b53ab-3f71-48c3-a4f1-6b698eeaf0c3",
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "ameliore les effets visules de mes interfaces"
+                }
+            ],
+            "context": {},
+            "createdAt": 1763538191047,
+            "isInternal": false,
+            "rawContent": {
+                "type": "doc",
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "ameliore les effets visules de mes interfaces"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "autoAppliedRules": []
+        },
+        {
+            "id": "5f413389-0767-45a5-9c4b-971d6c8e172e",
+            "role": "system",
+            "content": [
+                {
+                    "type": "errorText",
+                    "text": "",
+                    "title": "You’ve hit your plan usage limits",
+                    "actions": [
+                        {
+                            "type": "upgradePlan",
+                            "title": "Upgrade plan",
+                            "waitSeconds": 83458
+                        },
+                        {
+                            "type": "externalAction",
+                            "title": "Regenerate",
+                            "action": "regenerateLastAnswer"
+                        }
+                    ]
+                }
+            ],
+            "createdAt": 1763538541870,
+            "isInternal": false
+        }
+    ],
+    "isAgent": true,
+    "isNameGenerated": true,
+    "isCustomAgent": false,
+    "isUnitTestsAgent": false,
+    "isE2EAgent": false,
+    "isWebDevAgent": false,
+    "isQnaAgent": false,
+    "isRepoInfoAgent": false,
+    "model": "default",
+    "agentsRuntime": "zen-cli"
+}
+}

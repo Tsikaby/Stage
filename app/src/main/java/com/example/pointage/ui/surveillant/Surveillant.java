@@ -5,14 +5,16 @@ public class Surveillant {
     private String numero_salle;
     private String nom_surveillant;
     private String contact;
+    private String email;
 
-    public Surveillant() { } // obligatoire pour Firestore
+    public Surveillant() { }
 
-    public Surveillant(int id_surveillant, String numero_salle, String nom_surveillant, String contact) {
+    public Surveillant(int id_surveillant, String numero_salle, String nom_surveillant, String contact, String email) {
         this.id_surveillant = id_surveillant;
         this.numero_salle = numero_salle;
         this.nom_surveillant = nom_surveillant;
         this.contact = contact;
+        this.email = email;
     }
 
     // Getters et Setters
@@ -28,5 +30,9 @@ public class Surveillant {
     public String getContact() { return contact; }
 
     public void setContact(String contact) { this.contact = contact; }
+
+    public String getEmail() { return email; }
+
+    public void setEmail(String email) { this.email = email; }
 
 }

@@ -1,0 +1,84 @@
+{
+    "checksum": "38e7427e6820ef967081448a1bc37bd5291c71d8f38d5ee278571c195cefcab5",
+    "data": {
+    "id": "2036ae9c-43c9-43b0-a4ec-188335ec220e",
+    "createdAt": 1763538553654,
+    "updatedAt": 1763538566158,
+    "title": "Visuels d’Interfaces Améliorés",
+    "messages": [
+        {
+            "id": "808b2a82-3ec1-4bc5-b932-85bf8e0a8cb0",
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "ameliore les effets visules de mes interfaces"
+                }
+            ],
+            "context": {
+                "currentFile": {
+                    "path": "app/src/main/res/layout/fragment_home.xml",
+                    "fsPath": "D:/JB/J/Locale/POINTAGE/app/src/main/res/layout/fragment_home.xml",
+                    "sources": [
+                        "opened_tab"
+                    ],
+                    "content": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<androidx.constraintlayout.widget.ConstraintLayout\n    xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    xmlns:app=\"http://schemas.android.com/apk/res-auto\"\n    xmlns:tools=\"http://schemas.android.com/tools\"\n    android:layout_width=\"match_parent\"\n    android:layout_height=\"match_parent\"\n    android:background=\"@color/background_light\"\n    tools:context=\".ui.home.HomeFragment\">\n\n    <!-- En-tête avec gradient -->\n    <androidx.cardview.widget.CardView\n        android:id=\"@+id/header_card\"\n        android:layout_width=\"0dp\"\n        android:layout_height=\"wrap_content\"\n        app:cardCornerRadius=\"0dp\"\n        app:cardElevation=\"4dp\"\n        app:layout_constraintEnd_toEndOf=\"parent\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintTop_toTopOf=\"parent\">\n        \n        <LinearLayout\n            android:layout_width=\"match_parent\"\n            android:layout_height=\"wrap_content\"\n            android:orientation=\"vertical\"\n            android:padding=\"24dp\"\n            android:background=\"@drawable/bg_gradient_header\">\n            \n            <TextView\n                android:layout_width=\"wrap_content\"\n                android:layout_height=\"wrap_content\"\n                android:text=\"📊 Tableau de Bord\"\n                android:textSize=\"26sp\"\n                android:textStyle=\"bold\"\n                android:textColor=\"@color/text_on_primary\" />\n            \n            <TextView\n                android:layout_width=\"wrap_content\"\n                android:layout_height=\"wrap_content\"\n                android:text=\"Suivi en temps réel des pointages\"\n                android:textSize=\"15sp\"\n                android:textColor=\"@color/text_on_primary\"\n                android:alpha=\"0.9\"\n                android:layout_marginTop=\"6dp\" />\n        </LinearLayout>\n    </androidx.cardview.widget.CardView>\n\n    <!-- Titre de la section notifications -->\n    <androidx.cardview.widget.CardView\n        android:id=\"@+id/notifications_header_card\"\n        android:layout_width=\"0dp\"\n        android:layout_height=\"wrap_content\"\n        android:layout_marginStart=\"16dp\"\n        android:layout_marginEnd=\"16dp\"\n        android:layout_marginTop=\"20dp\"\n        app:cardCornerRadius=\"12dp\"\n        app:cardElevation=\"2dp\"\n        app:layout_constraintEnd_toEndOf=\"parent\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintTop_toBottomOf=\"@id/header_card\">\n\n        <LinearLayout\n            android:id=\"@+id/notifications_header\"\n            android:layout_width=\"match_parent\"\n            android:layout_height=\"wrap_content\"\n            android:orientation=\"horizontal\"\n            android:gravity=\"center_vertical\"\n            android:padding=\"16dp\"\n            android:background=\"@drawable/bg_surface\">\n\n            <TextView\n                android:layout_width=\"wrap_content\"\n                android:layout_height=\"wrap_content\"\n                android:text=\"🔔\"\n                android:textSize=\"24sp\"\n                android:layout_marginEnd=\"12dp\" />\n\n            <TextView\n                android:id=\"@+id/notifications_title\"\n                android:layout_width=\"0dp\"\n                android:layout_height=\"wrap_content\"\n                android:layout_weight=\"1\"\n                android:text=\"Notifications récentes\"\n                android:textColor=\"@color/text_primary\"\n                android:textSize=\"18sp\"\n                android:textStyle=\"bold\" />\n            \n            <TextView\n                android:layout_width=\"wrap_content\"\n                android:layout_height=\"wrap_content\"\n                android:text=\"↻\"\n                android:textSize=\"20sp\"\n                android:textColor=\"@color/primary_color\"\n                android:padding=\"8dp\" />\n\n        </LinearLayout>\n    </androidx.cardview.widget.CardView>\n\n    <!-- RecyclerView pour les notifications -->\n    <androidx.recyclerview.widget.RecyclerView\n        android:id=\"@+id/notifications_recycler_view\"\n        android:layout_width=\"0dp\"\n        android:layout_height=\"0dp\"\n        android:layout_marginTop=\"12dp\"\n        android:clipToPadding=\"false\"\n        android:paddingTop=\"4dp\"\n        android:paddingBottom=\"8dp\"\n        app:layout_constraintBottom_toBottomOf=\"parent\"\n        app:layout_constraintEnd_toEndOf=\"parent\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintTop_toBottomOf=\"@id/notifications_header_card\"\n        tools:listitem=\"@layout/item_notification\" />\n\n    <!-- Message quand il n'y a pas de notifications -->\n    <androidx.cardview.widget.CardView\n        android:id=\"@+id/empty_notifications_layout\"\n        android:layout_width=\"0dp\"\n        android:layout_height=\"wrap_content\"\n        android:layout_marginStart=\"32dp\"\n        android:layout_marginEnd=\"32dp\"\n        android:layout_marginTop=\"40dp\"\n        android:visibility=\"gone\"\n        app:cardCornerRadius=\"16dp\"\n        app:cardElevation=\"2dp\"\n        app:layout_constraintBottom_toBottomOf=\"parent\"\n        app:layout_constraintEnd_toEndOf=\"parent\"\n        app:layout_constraintStart_toStartOf=\"parent\"\n        app:layout_constraintTop_toBottomOf=\"@id/notifications_header_card\">\n\n        <LinearLayout\n            android:layout_width=\"match_parent\"\n            android:layout_height=\"wrap_content\"\n            android:orientation=\"vertical\"\n            android:gravity=\"center\"\n            android:padding=\"40dp\"\n            android:background=\"@drawable/bg_card_modern\">\n\n            <TextView\n                android:layout_width=\"wrap_content\"\n                android:layout_height=\"wrap_content\"\n                android:text=\"📭\"\n                android:textSize=\"72sp\"\n                android:layout_marginBottom=\"20dp\" />\n\n            <TextView\n                android:id=\"@+id/empty_notifications_text\"\n                android:layout_width=\"wrap_content\"\n                android:layout_height=\"wrap_content\"\n                android:text=\"Aucune notification\"\n                android:textColor=\"@color/text_primary\"\n                android:textSize=\"18sp\"\n                android:textAlignment=\"center\"\n                android:textStyle=\"bold\" />\n            \n            <TextView\n                android:layout_width=\"wrap_content\"\n                android:layout_height=\"wrap_content\"\n                android:text=\"Les nouvelles notifications apparaîtront ici\"\n                android:textColor=\"@color/text_secondary\"\n                android:textSize=\"14sp\"\n                android:textAlignment=\"center\"\n                android:layout_marginTop=\"8dp\" />\n\n        </LinearLayout>\n    </androidx.cardview.widget.CardView>\n\n</androidx.constraintlayout.widget.ConstraintLayout>\n",
+                    "language": "xml"
+                }
+            },
+            "createdAt": 1763538553703,
+            "isInternal": false,
+            "rawContent": {
+                "type": "doc",
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "ameliore les effets visules de mes interfaces"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "autoAppliedRules": []
+        },
+        {
+            "id": "15bc431c-69b7-4d11-a236-a9dce0af9bf1",
+            "role": "system",
+            "content": [
+                {
+                    "type": "errorText",
+                    "text": "",
+                    "title": "You’ve hit your plan usage limits",
+                    "actions": [
+                        {
+                            "type": "upgradePlan",
+                            "title": "Upgrade plan",
+                            "waitSeconds": 83434
+                        },
+                        {
+                            "type": "externalAction",
+                            "title": "Regenerate",
+                            "action": "regenerateLastAnswer"
+                        }
+                    ]
+                }
+            ],
+            "createdAt": 1763538566158,
+            "isInternal": false
+        }
+    ],
+    "isAgent": true,
+    "isNameGenerated": true,
+    "isCustomAgent": false,
+    "isUnitTestsAgent": false,
+    "isE2EAgent": false,
+    "isWebDevAgent": false,
+    "isQnaAgent": false,
+    "isRepoInfoAgent": false,
+    "model": "default",
+    "agentsRuntime": "zen-cli"
+}
+}

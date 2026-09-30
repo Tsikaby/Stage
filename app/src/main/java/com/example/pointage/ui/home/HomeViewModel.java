@@ -10,7 +10,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.example.pointage.SupabaseClient;
+import com.example.pointage.ConnectClient;
+import com.example.pointage.ConnectClient;
 import com.example.pointage.ui.historique.DateUtils;
 import com.example.pointage.ui.historique.HistoriqueViewModel;
 import com.example.pointage.utils.NotificationHelper;
@@ -39,7 +40,7 @@ public class HomeViewModel extends ViewModel {
     
     private final MutableLiveData<String> mText;
     private final MutableLiveData<List<Notification>> notificationsLiveData = new MutableLiveData<>();
-    private SupabaseClient supabaseClient;
+    private ConnectClient connectClient;
     private Context context;
     private List<Notification> previousNotifications = new ArrayList<>();
     private SharedPreferences sharedPreferences;
@@ -64,13 +65,13 @@ public class HomeViewModel extends ViewModel {
         mText.setValue("POINTAGES DES SURVEILLANTS DE L'ENI");
 
         try {
-            supabaseClient = SupabaseClient.getInstance();
+            connectClient = ConnectClient.getInstance();
         } catch (java.net.UnknownHostException e) {
             Log.e(TAG, "Failed to initialize SupabaseClient", e);
-            supabaseClient = null;
+            connectClient = null;
         }
 
-        if (supabaseClient != null) {
+        if (connectClient != null) {
             // Charger les notifications initiales
             loadNotifications();
             // Vérifier les absences pour examens déjà passés au démarrage
@@ -140,7 +141,7 @@ public class HomeViewModel extends ViewModel {
         final Date limitDate = limitCal.getTime();
 
         // 1️⃣ Récupérer tous les surveillants
-        supabaseClient.select("surveillant", "*", null, new SupabaseClient.SupabaseCallback() {
+        connectClient.select("surveillant", "*", null, new ConnectClient.ClientCallback() {
             @Override
             public void onSuccess(JsonArray surveillantResult) {
                 try {
@@ -174,7 +175,7 @@ public class HomeViewModel extends ViewModel {
                                                   Map<Long, String> surveillantRoomById,
                                                   Date limitDate) {
         // Récupérer les affectations surveillant/salle depuis planning_surveillance
-        supabaseClient.select("planning_surveillance", "*", null, new SupabaseClient.SupabaseCallback() {
+        connectClient.select("planning_surveillance", "*", null, new ConnectClient.ClientCallback() {
             @Override
             public void onSuccess(JsonArray planningResult) {
                 try {
@@ -217,8 +218,8 @@ public class HomeViewModel extends ViewModel {
                                            Map<Long, String> surveillantNameById,
                                            Map<Long, String> surveillantRoomById,
                                            Date limitDate) {
-        supabaseClient.select("pointage", "*", "order=heure_pointage.desc&limit=150",
-                new SupabaseClient.SupabaseCallback() {
+        connectClient.select("pointage", "*", "order=heure_pointage.desc&limit=150",
+                new ConnectClient.ClientCallback() {
                     @Override
                     public void onSuccess(JsonArray pointageResult) {
                         try {
@@ -374,7 +375,7 @@ public class HomeViewModel extends ViewModel {
         // Charger les absences depuis la table sanction uniquement si l'examen est passé
         String limitDateStr = DateUtils.formatDateOnly(limitDate);
         String filter = "type=eq.ABSENCE&date_examen=gte." + limitDateStr;
-        supabaseClient.select("sanction", "*", filter, new SupabaseClient.SupabaseCallback() {
+        connectClient.select("sanction", "*", filter, new ConnectClient.ClientCallback() {
             @Override
             public void onSuccess(JsonArray sanctionResult) {
                 try {
@@ -551,7 +552,7 @@ public class HomeViewModel extends ViewModel {
         
         // Supprimer les anciens pointages (plus de 60 jours)
         String pointageFilter = "heure_pointage=lt." + limitDateStr;
-        supabaseClient.delete("pointage", pointageFilter, new SupabaseClient.SupabaseCallback() {
+        connectClient.delete("pointage", pointageFilter, new ConnectClient.ClientCallback() {
             @Override
             public void onSuccess(JsonArray result) {
                 Log.d(TAG, "Anciens pointages supprimés avec succès");

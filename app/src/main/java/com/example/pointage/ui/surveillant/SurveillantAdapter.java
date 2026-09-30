@@ -94,7 +94,7 @@ public class SurveillantAdapter extends RecyclerView.Adapter<SurveillantAdapter.
     }
 
     static class SurveillantViewHolder extends RecyclerView.ViewHolder {
-        TextView nomSurveillantTextView, contactTextView, idSurveillantTextView, idSalleTextView;
+        TextView nomSurveillantTextView, contactTextView, idSurveillantTextView, idSalleTextView, emailTextView;
         ImageView qrCodeImageView;
         Button saveQrButton, shareWhatsappButton, shareMessengerButton, shareEmailButton, generatePdfButton, toggleShareButton;
         Button showQrButton, showActionsButton, closeQrButton, closeActionsButton;
@@ -114,6 +114,7 @@ public class SurveillantAdapter extends RecyclerView.Adapter<SurveillantAdapter.
             contactTextView = itemView.findViewById(R.id.contact_text_view);
             idSurveillantTextView = itemView.findViewById(R.id.id_surveillant_text_view);
             idSalleTextView = itemView.findViewById(R.id.numero_salle_text_view);
+            emailTextView = itemView.findViewById(R.id.email_text_view);
             qrCodeImageView = itemView.findViewById(R.id.qr_code_image_view);
             saveQrButton = itemView.findViewById(R.id.save_qr_button);
             shareWhatsappButton = itemView.findViewById(R.id.share_whatsapp_button);
@@ -138,6 +139,7 @@ public class SurveillantAdapter extends RecyclerView.Adapter<SurveillantAdapter.
             contactTextView.setText("Contact: " + surveillant.getContact());
             idSurveillantTextView.setText("ID Surveillant: " + surveillant.getId_surveillant());
             idSalleTextView.setText("Numéro de salle: " + surveillant.getNumero_salle());
+            emailTextView.setText("Email: " + (surveillant.getEmail() != null ? surveillant.getEmail() : "N/A"));
 
             try {
                 BarcodeEncoder barcodeEncoder = new BarcodeEncoder();

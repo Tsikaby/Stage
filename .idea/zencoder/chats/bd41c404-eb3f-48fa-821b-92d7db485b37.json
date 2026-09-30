@@ -1,0 +1,485 @@
+{
+    "checksum": "835ffda4f879091b3cc850bb0dbc542491407b4e03c969f3bb0d1ba627ff6d82",
+    "data": {
+    "id": "bd41c404-eb3f-48fa-821b-92d7db485b37",
+    "createdAt": 1760512568016,
+    "updatedAt": 1760513069542,
+    "title": "Modification Table Planning Surveillance",
+    "messages": [
+        {
+            "id": "8408aaac-9e46-4d3e-b81a-50c6cc9631c7",
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "voici la nouvelle structure de la table planningsurveillance create table public.planning_surveillance ("
+                },
+                {
+                    "type": "text",
+                    "text": "  id_planning bigserial not null,"
+                },
+                {
+                    "type": "text",
+                    "text": "  id_examen bigint not null,"
+                },
+                {
+                    "type": "text",
+                    "text": "  numero_salle character varying(255) not null,"
+                },
+                {
+                    "type": "text",
+                    "text": "  id_surveillant bigint not null,"
+                },
+                {
+                    "type": "text",
+                    "text": "  date_examen character varying(255) not null,"
+                },
+                {
+                    "type": "text",
+                    "text": "  heure_debut character varying(255) not null,"
+                },
+                {
+                    "type": "text",
+                    "text": "  heure_fin character varying(255) not null,"
+                },
+                {
+                    "type": "text",
+                    "text": "  constraint planning_surveillance_pkey primary key (id_planning),"
+                },
+                {
+                    "type": "text",
+                    "text": "  constraint planning_surveillance_id_examen_fkey foreign KEY (id_examen) references examen (id_examen) on delete CASCADE,"
+                },
+                {
+                    "type": "text",
+                    "text": "  constraint planning_surveillance_id_surveillant_fkey foreign KEY (id_surveillant) references surveillant (id_surveillant) on delete CASCADE,"
+                },
+                {
+                    "type": "text",
+                    "text": "  constraint planning_surveillance_numero_salle_fkey foreign KEY (numero_salle) references salle (numero_salle) on delete CASCADE"
+                },
+                {
+                    "type": "text",
+                    "text": ") TABLESPACE pg_default;"
+                }
+            ],
+            "context": {
+                "currentFile": {
+                    "path": "app/src/main/java/com/example/pointage/ui/historique/HistoriqueViewModel.java",
+                    "fsPath": "D:/POINTAGE/app/src/main/java/com/example/pointage/ui/historique/HistoriqueViewModel.java",
+                    "sources": [
+                        "opened_tab"
+                    ],
+                    "content": "package com.example.pointage.ui.historique;\n\nimport android.util.Log;\n\nimport androidx.lifecycle.LiveData;\nimport androidx.lifecycle.MutableLiveData;\nimport androidx.lifecycle.ViewModel;\n\nimport com.example.pointage.SupabaseClient;\nimport com.example.pointage.ui.historique.DateUtils;\nimport com.google.gson.JsonArray;\nimport com.google.gson.JsonObject;\n\nimport java.net.UnknownHostException;\nimport java.text.ParseException;\nimport java.util.ArrayList;\nimport java.util.Calendar;\nimport java.util.Date;\nimport java.util.HashMap;\nimport java.util.List;\nimport java.util.Locale;\nimport java.util.Map;\nimport java.text.Normalizer;\n\npublic class HistoriqueViewModel extends ViewModel {\n\n    private String getSession(Date time) {\n        Calendar cal = Calendar.getInstance();\n        cal.setTime(time);\n        int hour = cal.get(Calendar.HOUR_OF_DAY);\n        return hour < 12 ? \"Matin\" : \"Après-midi\";\n    }\n\n    private final MutableLiveData<List<Pointage>> historiqueLiveData = new MutableLiveData<>();\n    private final SupabaseClient supabaseClient = SupabaseClient.getInstance();\n\n    private int monthFilter = Calendar.getInstance().get(Calendar.MONTH);\n    private int yearFilter = Calendar.getInstance().get(Calendar.YEAR);\n\n    public HistoriqueViewModel() throws UnknownHostException {\n        loadHistorique();\n    }\n\n    public void setMonth(int month) {\n        this.monthFilter = month;\n        loadHistorique();\n    }\n\n    public void setYear(int year) {\n        this.yearFilter = year;\n        loadHistorique();\n    }\n\n    public void loadHistorique() {\n        // Filtrer côté serveur par mois/année sélectionnés\n        Calendar startCal = Calendar.getInstance();\n        startCal.set(Calendar.YEAR, yearFilter);\n        startCal.set(Calendar.MONTH, monthFilter); // 0-based\n        startCal.set(Calendar.DAY_OF_MONTH, 1);\n        startCal.set(Calendar.HOUR_OF_DAY, 0);\n        startCal.set(Calendar.MINUTE, 0);\n        startCal.set(Calendar.SECOND, 0);\n        startCal.set(Calendar.MILLISECOND, 0);\n        String start = DateUtils.formatForSupabase(startCal.getTime());\n\n        Calendar nextCal = (Calendar) startCal.clone();\n        nextCal.add(Calendar.MONTH, 1);\n        String nextStart = DateUtils.formatForSupabase(nextCal.getTime());\n\n        Log.d(\"HistoriqueViewModel\", \"Date range: start=\" + start + \", nextStart=\" + nextStart);\n        String filter = \"heure_pointage=gte.\" + start\n                + \"&heure_pointage=lt.\" + nextStart\n                + \"&order=heure_pointage.desc\";\n        Log.d(\"HistoriqueViewModel\", \"Filter string: \" + filter);\n\n        supabaseClient.select(\"pointage\", \"*\", filter, new SupabaseClient.SupabaseCallback() {\n            @Override\n            public void onSuccess(JsonArray result) {\n                Log.d(\"HistoriqueViewModel\", \"loadHistorique: received \" + result.size() + \" pointages from Supabase\");\n                List<Pointage> allPointages = new ArrayList<>();\n                try {\n                    for (int i = 0; i < result.size(); i++) {\n                        JsonObject doc = result.get(i).getAsJsonObject();\n                        Pointage p = new Pointage();\n                        p.setId(String.valueOf(doc.get(\"id_pointage\").getAsLong()));\n                        p.setId_pointage(doc.get(\"id_pointage\").getAsLong());\n\n                        // Conversion du timestamp Supabase en Date\n                        String timestampStr = doc.get(\"heure_pointage\").getAsString();\n                        Date date = DateUtils.parseSupabaseTimestamp(timestampStr);\n                        p.setHeure_pointage(date);\n\n                        // Safety: filtre côté client si jamais le serveur renvoie hors intervalle\n                        Calendar c = Calendar.getInstance();\n                        c.setTime(date);\n                        if (c.get(Calendar.YEAR) != yearFilter || c.get(Calendar.MONTH) != monthFilter) {\n                            continue; // skip\n                        }\n\n                        p.setId_surveillant(doc.get(\"id_surveillant\").getAsLong());\n                        p.setRetard(doc.get(\"retard\").getAsBoolean());\n\n                        // Numero salle depuis pointage\n                        if (doc.has(\"numero_salle\") && !doc.get(\"numero_salle\").isJsonNull()) {\n                            p.setNumero_salle(doc.get(\"numero_salle\").getAsString());\n                        } else {\n                            p.setNumero_salle(null);\n                        }\n\n                        // Nom surveillant sera rempli par fetchSurveillantDataAndBind\n                        p.setNom_surveillant(\"Chargement...\");\n                        allPointages.add(p);\n                    }\n                    Log.d(\"HistoriqueViewModel\", \"loadHistorique: after filtering, \" + allPointages.size() + \" pointages remain\");\n                    fetchSurveillantDataAndBind(allPointages);\n                } catch (Exception e) {\n                    Log.e(\"HistoriqueViewModel\", \"loadHistorique: error parsing pointages\", e);\n                    e.printStackTrace();\n                }\n            }\n\n            @Override\n            public void onError(Exception error) {\n                Log.e(\"HistoriqueViewModel\", \"loadHistorique: error loading pointages\", error);\n                error.printStackTrace();\n            }\n        });\n    }\n\n    public void performScan(String numeroSalleSurveillant, Long idSurveillant, String nomSurveillant, final OnScanResultListener listener) {\n        Date now = new Date();\n        String session = getSession(now);\n        String currentDate = DateUtils.getCurrentDateString();\n\n        Log.d(\"HistoriqueViewModel\", \"performScan: numeroSalleSurveillant=\" + numeroSalleSurveillant + \", idSurveillant=\" + idSurveillant + \", nomSurveillant=\" + nomSurveillant + \", currentDate=\" + currentDate);\n\n        // Vérifier d'abord si le surveillant est planifié dans cette salle à cette heure\n        // via la table planning_surveillance (jointure avec examen pour la date)\n        // On filtre directement par id_surveillant\n        String planningFilter = \"id_surveillant=eq.\" + idSurveillant;\n\n        supabaseClient.select(\"planning_surveillance\", \"*\", planningFilter, new SupabaseClient.SupabaseCallback() {\n            @Override\n            public void onSuccess(JsonArray planningResult) {\n                Log.d(\"HistoriqueViewModel\", \"planningResult.size()=\" + planningResult.size());\n                if (planningResult.size() == 0) {\n                    if (listener != null) listener.onScanFailure(\"Ce surveillant n'est pas planifié dans cette salle aujourd'hui.\");\n                    return;\n                }\n\n                // Vérifier si le surveillant est planifié dans la salle scannée\n                // La table planning_surveillance a une ligne par surveillant/salle\n                boolean anyMatch = false;\n                final String[] matchedSalleHolder = {null};\n                Long matchedIdExamen = null;\n                \n                for (int i = 0; i < planningResult.size(); i++) {\n                    JsonObject planning = planningResult.get(i).getAsJsonObject();\n\n                    // Vérifier si la salle correspond\n                    String numeroSallePlanning = planning.get(\"numero_salle\").getAsString();\n                    Log.d(\"HistoriqueViewModel\", \"Planning \" + i + \": numeroSallePlanning=\" + numeroSallePlanning + \", id_surveillant=\" + planning.get(\"id_surveillant\").getAsLong());\n                    \n                    String[] surveillantSalles = numeroSalleSurveillant.split(\",\");\n                    boolean salleMatch = false;\n                    for (String survSalle : surveillantSalles) {\n                        if (numeroSallePlanning.trim().equals(survSalle.trim())) {\n                            salleMatch = true;\n                            matchedSalleHolder[0] = numeroSallePlanning.trim();\n                            matchedIdExamen = planning.get(\"id_examen\").getAsLong();\n                            break;\n                        }\n                    }\n                    \n                    Log.d(\"HistoriqueViewModel\", \"Salle match: \" + salleMatch + \" for \" + numeroSalleSurveillant);\n                    if (salleMatch) {\n                        anyMatch = true;\n                        Log.d(\"HistoriqueViewModel\", \"MATCH FOUND! Surveillant is scheduled in salle \" + matchedSalleHolder[0]);\n                        break;\n                    }\n                }\n\n                Log.d(\"HistoriqueViewModel\", \"Final anyMatch value: \" + anyMatch);\n                if (!anyMatch) {\n                    if (listener != null) listener.onScanFailure(\"Ce surveillant n'est pas planifié dans cette salle aujourd'hui.\");\n                    return;\n                }\n                \n                final Long finalMatchedIdExamen = matchedIdExamen;\n\n                // Filtrer par heure: vérifier si maintenant est entre heure_debut et heure_fin\n                // On vérifie uniquement pour le planning qui correspond à la salle ET à la session\n                boolean isScheduledNow = false;\n                for (int i = 0; i < planningResult.size(); i++) {\n                    JsonObject planning = planningResult.get(i).getAsJsonObject();\n                    \n                    // Vérifier si ce planning correspond à la salle matchée\n                    String numeroSallePlanning = planning.get(\"numero_salle\").getAsString();\n                    if (!numeroSallePlanning.trim().equals(matchedSalleHolder[0])) {\n                        continue;\n                    }\n                    \n                    // Vérifier l'heure pour ce planning spécifique\n                    try {\n                        // Les colonnes heure_debut et heure_fin sont de type timestamp\n                        String heureDebutStr = planning.get(\"heure_debut\").getAsString();\n                        Log.d(\"HistoriqueViewModel\", \"Checking time for planning: heure_debut=\" + heureDebutStr);\n                        \n                        // Parser le timestamp complet\n                        Date heureDebut = DateUtils.parseSupabaseTimestamp(heureDebutStr);\n                        \n                        // Vérifier si l'examen appartient à la même session que le scan actuel\n                        String examenSession = getSession(heureDebut);\n                        if (!examenSession.equals(session)) {\n                            Log.d(\"HistoriqueViewModel\", \"Exam session (\" + examenSession + \") does not match current session (\" + session + \"), skipping\");\n                            continue;\n                        }\n                        \n                        // Permettre le pointage 2 heures avant le début de l'examen\n                        long startMs = heureDebut.getTime() - (2 * 60 * 60 * 1000); // -2 heures en millisecondes\n\n                        Date heureFin = null;\n                        if (planning.has(\"heure_fin\") && !planning.get(\"heure_fin\").isJsonNull()) {\n                            String heureFinStr = planning.get(\"heure_fin\").getAsString();\n                            heureFin = DateUtils.parseSupabaseTimestamp(heureFinStr);\n                            Log.d(\"HistoriqueViewModel\", \"heure_fin=\" + heureFinStr);\n                        }\n                        if (heureFin == null) heureFin = heureDebut;\n                        long endMs = heureFin.getTime();\n\n                        long nowMs = now.getTime();\n                        \n                        // Créer des dates pour l'affichage dans les logs\n                        Date allowedStartTime = new Date(startMs);\n                        \n                        Log.d(\"HistoriqueViewModel\", \"Time check: nowMs=\" + nowMs + \", startMs=\" + startMs + \", endMs=\" + endMs);\n                        Log.d(\"HistoriqueViewModel\", \"Current time: \" + now.toString());\n                        Log.d(\"HistoriqueViewModel\", \"Allowed start time (2h before exam): \" + allowedStartTime.toString());\n                        Log.d(\"HistoriqueViewModel\", \"Exam start time: \" + heureDebut.toString());\n                        Log.d(\"HistoriqueViewModel\", \"End time: \" + heureFin.toString());\n                        Log.d(\"HistoriqueViewModel\", \"Session: \" + session);\n                        \n                        if (nowMs >= startMs && nowMs <= endMs) {\n                            isScheduledNow = true;\n                            Log.d(\"HistoriqueViewModel\", \"Time match found! isScheduledNow=true\");\n                            break;\n                        } else {\n                            Log.d(\"HistoriqueViewModel\", \"Time does not match. nowMs >= startMs: \" + (nowMs >= startMs) + \", nowMs <= endMs: \" + (nowMs <= endMs));\n                        }\n                    } catch (Exception e) {\n                        Log.e(\"HistoriqueViewModel\", \"Error parsing time for planning entry\", e);\n                        // Ignore parsing errors for this planning entry\n                    }\n                }\n                Log.d(\"HistoriqueViewModel\", \"Final isScheduledNow value: \" + isScheduledNow);\n\n                if (!isScheduledNow) {\n                    if (listener != null) listener.onScanFailure(\"Ce surveillant n'est pas planifié dans cette salle pour la session \" + session + \".\");\n                    return;\n                }\n\n                // On a déjà l'id_examen du planning, on peut directement vérifier l'examen\n                if (finalMatchedIdExamen == null) {\n                    if (listener != null) listener.onScanFailure(\"Erreur: ID examen non trouvé dans le planning.\");\n                    return;\n                }\n                \n                Log.d(\"HistoriqueViewModel\", \"Using id_examen from planning: \" + finalMatchedIdExamen);\n\n                // Vérifier d'abord si le surveillant a déjà pointé pour cette session aujourd'hui\n                String startDate = currentDate + \"T00:00:00\";\n                String endDate = currentDate + \"T23:59:59\";\n                String pointageFilter = \"id_surveillant=eq.\" + idSurveillant + \"&heure_pointage=gte.\" + startDate + \"&heure_pointage=lte.\" + endDate;\n                \n                supabaseClient.select(\"pointage\", \"*\", pointageFilter, new SupabaseClient.SupabaseCallback() {\n                    @Override\n                    public void onSuccess(JsonArray pointageResult) {\n                        // Vérifier si un pointage existe déjà pour cette session\n                        boolean hasPointageInCurrentSession = false;\n                        try {\n                            for (int i = 0; i < pointageResult.size(); i++) {\n                                JsonObject p = pointageResult.get(i).getAsJsonObject();\n                                String heurePointageStr = p.get(\"heure_pointage\").getAsString();\n                                Date pointageTime = DateUtils.parseSupabaseTimestamp(heurePointageStr);\n                                String pointageSession = getSession(pointageTime);\n                                \n                                if (pointageSession.equals(session)) {\n                                    hasPointageInCurrentSession = true;\n                                    break;\n                                }\n                            }\n                        } catch (Exception e) {\n                            Log.e(\"HistoriqueViewModel\", \"Error checking existing pointages\", e);\n                        }\n                        \n                        if (hasPointageInCurrentSession) {\n                            if (listener != null) {\n                                listener.onScanFailure(\"Vous avez déjà pointé pour la session \" + session + \" aujourd'hui.\");\n                            }\n                            return;\n                        }\n                        \n                        // Continuer avec la vérification de l'examen\n                        String examenFilter = \"id_examen=eq.\" + finalMatchedIdExamen;\n                        \n                        supabaseClient.select(\"examen\", \"*\", examenFilter, new SupabaseClient.SupabaseCallback() {\n                            @Override\n                            public void onSuccess(JsonArray examenResult) {\n                                if (examenResult.size() == 0) {\n                                    if (listener != null) listener.onScanFailure(\"Aucun examen trouvé pour cet ID.\");\n                                    return;\n                                }\n\n                                try {\n                                    JsonObject examen = examenResult.get(0).getAsJsonObject();\n                                    long idExamen = examen.get(\"id_examen\").getAsLong();\n\n                            // Check for absences in previous sessions\n                            Calendar nowCal = Calendar.getInstance();\n                            nowCal.setTime(now);\n                            long nowMs = nowCal.getTimeInMillis();\n                            String currentSession = getSession(now);\n                            String otherSession = currentSession.equals(\"Matin\") ? \"Après-midi\" : \"Matin\";\n                            Calendar sessionEndCal = Calendar.getInstance();\n                            sessionEndCal.set(nowCal.get(Calendar.YEAR), nowCal.get(Calendar.MONTH), nowCal.get(Calendar.DAY_OF_MONTH),\n                                    otherSession.equals(\"Matin\") ? 12 : 18, 0, 0);\n                            long sessionEndMs = sessionEndCal.getTimeInMillis();\n                            if (nowMs > sessionEndMs) {\n                                // Check if has pointage in other session\n                                String startDate = currentDate + \"T00:00:00\";\n                                String endDate = currentDate + \"T23:59:59\";\n                                String filter = \"id_surveillant=eq.\" + idSurveillant + \"&heure_pointage=gte.\" + startDate + \"&heure_pointage=lte.\" + endDate;\n                                supabaseClient.select(\"pointage\", \"*\", filter, new SupabaseClient.SupabaseCallback() {\n                                    @Override\n                                    public void onSuccess(JsonArray result) {\n                                        boolean hasPointageInOther = false;\n                                        try {\n                                            for (int i = 0; i < result.size(); i++) {\n                                                JsonObject p = result.get(i).getAsJsonObject();\n                                                String heure = p.get(\"heure_pointage\").getAsString();\n                                                Date pointageTime = DateUtils.parseTime(heure);\n                                                String pointageSession = getSession(pointageTime);\n                                                if (pointageSession.equals(otherSession)) {\n                                                    hasPointageInOther = true;\n                                                    break;\n                                                }\n                                            }\n                                        } catch (Exception e) {\n                                            e.printStackTrace();\n                                        }\n                                        if (!hasPointageInOther) {\n                                            // Record absence for other session\n                                            checkAndInsertSanction(idSurveillant, \"ABSENCE\", currentDate, matchedSalleHolder[0], otherSession, nomSurveillant, null);\n                                        }\n                                    }\n\n                                    @Override\n                                    public void onError(Exception e) {\n                                        e.printStackTrace();\n                                    }\n                                });\n                            }\n\n                            // Choisir le bon examen: si plusieurs (ex: 14h et 16h),\n                            // prendre celui dont l'heure_debut est la plus proche mais <= maintenant.\n                            // S'il n'y en a aucun avant, prendre le plus tôt de la session.\n\n                            JsonObject chosenExam = null;\n                            long bestPastStart = Long.MIN_VALUE;\n                            long bestFutureStart = Long.MAX_VALUE;\n                            JsonObject earliestFutureExam = null;\n                            long maxEndMs = Long.MIN_VALUE;\n\n                            for (int i = 0; i < examenResult.size(); i++) {\n                                JsonObject exam = examenResult.get(i).getAsJsonObject();\n                                String heureDebutStr = exam.get(\"heure_debut\").getAsString();\n                                Date heureDebut = DateUtils.parseTime(heureDebutStr);\n\n                                Calendar debutCal = Calendar.getInstance();\n                                debutCal.setTime(heureDebut);\n                                // Aligner la date sur aujourd'hui pour comparer correctement\n                                debutCal.set(nowCal.get(Calendar.YEAR), nowCal.get(Calendar.MONTH), nowCal.get(Calendar.DAY_OF_MONTH));\n                                long startMs = debutCal.getTimeInMillis();\n\n                                // Calculer heure de fin (si absente, fallback = heure_debut)\n                                Date heureFin = null;\n                                if (exam.has(\"heure_fin\") && !exam.get(\"heure_fin\").isJsonNull()) {\n                                    try { heureFin = DateUtils.parseTime(exam.get(\"heure_fin\").getAsString()); } catch (Exception ignored) {}\n                                }\n                                if (heureFin == null) heureFin = heureDebut;\n                                Calendar finCal = Calendar.getInstance();\n                                finCal.setTime(heureFin);\n                                finCal.set(nowCal.get(Calendar.YEAR), nowCal.get(Calendar.MONTH), nowCal.get(Calendar.DAY_OF_MONTH));\n                                long endMs = finCal.getTimeInMillis();\n                                if (endMs > maxEndMs) maxEndMs = endMs;\n\n                                if (startMs <= nowMs) {\n                                    if (startMs > bestPastStart) {\n                                        bestPastStart = startMs;\n                                        chosenExam = exam;\n                                    }\n                                } else {\n                                    if (startMs < bestFutureStart) {\n                                        bestFutureStart = startMs;\n                                        earliestFutureExam = exam;\n                                    }\n                                }\n                            }\n\n                            if (chosenExam == null) {\n                                // Aucun examen avant maintenant: prendre le plus tôt à venir\n                                chosenExam = earliestFutureExam != null ? earliestFutureExam : examenResult.get(0).getAsJsonObject();\n                            }\n\n                            Long examenId = chosenExam.get(\"id_examen\").getAsLong();\n                            String heureDebutStr = chosenExam.get(\"heure_debut\").getAsString();\n                            Date heureDebut = DateUtils.parseTime(heureDebutStr);\n\n                            // Calcul des bornes de l'examen choisi\n                            Calendar debutCal = Calendar.getInstance();\n                            debutCal.setTime(heureDebut);\n                            debutCal.set(nowCal.get(Calendar.YEAR), nowCal.get(Calendar.MONTH), nowCal.get(Calendar.DAY_OF_MONTH));\n                            long startMsChosen = debutCal.getTimeInMillis();\n                            // heure_fin du chosen (si absente, fallback = heure_debut)\n                            Date heureFinChosen = null;\n                            if (chosenExam.has(\"heure_fin\") && !chosenExam.get(\"heure_fin\").isJsonNull()) {\n                                try { heureFinChosen = DateUtils.parseTime(chosenExam.get(\"heure_fin\").getAsString()); } catch (Exception ignored) {}\n                            }\n                            if (heureFinChosen == null) heureFinChosen = heureDebut;\n                            Calendar finCalChosen = Calendar.getInstance();\n                            finCalChosen.setTime(heureFinChosen);\n                            finCalChosen.set(nowCal.get(Calendar.YEAR), nowCal.get(Calendar.MONTH), nowCal.get(Calendar.DAY_OF_MONTH));\n                            long endMsChosen = finCalChosen.getTimeInMillis();\n\n                            // Règle demandée: si scan après la fin DU DERNIER EXAMEN de la session/salle du jour → ABSENT (pas de pointage)\n                            boolean afterAllExams = nowMs > maxEndMs;\n                            if (afterAllExams) {\n                                // Check if absence already recorded for this session\n                                checkAndInsertSanction(idSurveillant, \"ABSENCE\", currentDate, matchedSalleHolder[0], currentSession, nomSurveillant, new SupabaseClient.SupabaseCallback() {\n                                    @Override\n                                    public void onSuccess(JsonArray result) {\n                                        // Absence enregistrée\n                                    }\n\n                                    @Override\n                                    public void onError(Exception e) {\n                                        e.printStackTrace();\n                                    }\n                                });\n                                if (listener != null) listener.onScanFailure(\"Pointage refusé: vous êtes considéré absent pour \" + currentSession + \" (salle \" + numeroSalleSurveillant + \").\");\n                                return;\n                            }\n\n                            // Sinon: retard si on scanne après le début de l'examen choisi\n                            boolean isRetard = nowMs > startMsChosen;\n\n                            String formattedDateTime = DateUtils.formatForSupabase(now);\n\n                            JsonObject newPointageData = new JsonObject();\n                            newPointageData.addProperty(\"heure_pointage\", formattedDateTime);\n                            newPointageData.addProperty(\"id_surveillant\", idSurveillant);\n                            newPointageData.addProperty(\"retard\", isRetard);\n                            newPointageData.addProperty(\"numero_salle\", matchedSalleHolder[0]);\n                            supabaseClient.insert(\"pointage\", newPointageData, new SupabaseClient.SupabaseCallback() {\n                                @Override\n                                public void onSuccess(JsonArray insertResult) {\n                                    // Enregistrer le retard dans la table sanction si nécessaire\n                                    if (isRetard) {\n                                        checkAndInsertSanction(idSurveillant, \"RETARD\", currentDate, matchedSalleHolder[0], currentSession, nomSurveillant, new SupabaseClient.SupabaseCallback() {\n                                            @Override\n                                            public void onSuccess(JsonArray result) {\n                                                // Retard enregistré\n                                            }\n\n                                            @Override\n                                            public void onError(Exception e) {\n                                                e.printStackTrace();\n                                            }\n                                        });\n                                    }\n                                    if (listener != null) {\n                                        String message = isRetard ?\n                                                \"Pointage enregistré avec succès pour \" + nomSurveillant + \"! (En retard)\" :\n                                                \"Pointage enregistré avec succès pour \" + nomSurveillant + \"! (À l'heure)\";\n                                        listener.onScanSuccess(message);\n                                    }\n                                    loadHistorique();\n                                }\n\n                                @Override\n                                public void onError(Exception e) {\n                                    if (listener != null) listener.onScanFailure(\"Erreur d'enregistrement: \" + e.getMessage());\n                                }\n                            });\n\n                        } catch (ParseException e) {\n                            if (listener != null) listener.onScanFailure(\"Erreur de format d'heure: \" + e.getMessage());\n                        } catch (Exception e) {\n                            if (listener != null) listener.onScanFailure(\"Erreur: \" + e.getMessage());\n                        }\n                    }\n\n                    @Override\n                    public void onError(Exception error) {\n                        if (listener != null) listener.onScanFailure(\"Échec de la recherche d'examen: \" + error.getMessage());\n                    }\n                });\n            }\n\n            @Override\n            public void onError(Exception error) {\n                if (listener != null) listener.onScanFailure(\"Échec de la vérification des pointages existants: \" + error.getMessage());\n            }\n        });\n            }\n\n            @Override\n            public void onError(Exception error) {\n                if (listener != null) listener.onScanFailure(\"Échec de la vérification du surveillant: \" + error.getMessage());\n            }\n        });\n    }\n\n    public interface OnScanResultListener {\n        void onScanSuccess(String message);\n        void onScanFailure(String errorMessage);\n    }\n\n    private void checkAndInsertSanction(long idSurveillant, String typeSanction, String date, String numeroSalle, String session, String nomSurveillant, SupabaseClient.SupabaseCallback callback) {\n        // Check if sanction already exists\n        String filter = \"id_surveillant=eq.\" + idSurveillant + \"&type=eq.\" + typeSanction + \"&date_examen=eq.\" + date + \"&numero_salle=eq.\" + numeroSalle + \"&session=eq.\" + session;\n        supabaseClient.select(\"sanction\", \"*\", filter, new SupabaseClient.SupabaseCallback() {\n            @Override\n            public void onSuccess(JsonArray result) {\n                if (result.size() == 0) {\n                    // No existing sanction, insert\n                    JsonObject sanctionData = new JsonObject();\n                    sanctionData.addProperty(\"id_surveillant\", idSurveillant);\n                    sanctionData.addProperty(\"type\", typeSanction);\n                    sanctionData.addProperty(\"date_examen\", date);\n                    sanctionData.addProperty(\"numero_salle\", numeroSalle);\n                    sanctionData.addProperty(\"session\", session);\n                    sanctionData.addProperty(\"nom_surveillant\", nomSurveillant);\n                    supabaseClient.insert(\"sanction\", sanctionData, callback);\n                } else {\n                    // Already exists, do nothing\n                    try {\n                        if (callback != null) callback.onSuccess(result);\n                    } catch (UnknownHostException e) {\n                        if (callback != null) callback.onError(e);\n                    }\n                }\n            }\n\n            @Override\n            public void onError(Exception e) {\n                if (callback != null) callback.onError(e);\n            }\n        });\n    }\n\n    private void fetchSurveillantDataAndBind(List<Pointage> pointageList) {\n        Log.d(\"HistoriqueViewModel\", \"fetchSurveillantDataAndBind: processing \" + pointageList.size() + \" pointages\");\n        List<Long> surveillantIds = new ArrayList<>();\n        for (Pointage p : pointageList) {\n            if (p.getId_surveillant() != null) {\n                surveillantIds.add(p.getId_surveillant());\n            }\n        }\n\n        if (surveillantIds.isEmpty()) {\n            Log.d(\"HistoriqueViewModel\", \"fetchSurveillantDataAndBind: no surveillant IDs, setting empty list\");\n            historiqueLiveData.setValue(pointageList);\n            return;\n        }\n        \n        Log.d(\"HistoriqueViewModel\", \"fetchSurveillantDataAndBind: fetching data for \" + surveillantIds.size() + \" surveillants\");\n\n        // Interroger la table surveillant\n        String surveillantIdsStr = String.join(\",\", surveillantIds.stream().map(String::valueOf).toArray(String[]::new));\n        String filter = \"id_surveillant=in.(\" + surveillantIdsStr + \")\";\n\n        supabaseClient.select(\"surveillant\", \"*\", filter, new SupabaseClient.SupabaseCallback() {\n            @Override\n            public void onSuccess(JsonArray result) {\n                Log.d(\"HistoriqueViewModel\", \"fetchSurveillantDataAndBind: received \" + result.size() + \" surveillants\");\n                Map<Long, String> surveillantNameMap = new HashMap<>();\n\n                try {\n                    for (int i = 0; i < result.size(); i++) {\n                        JsonObject doc = result.get(i).getAsJsonObject();\n                        Long id = doc.get(\"id_surveillant\").getAsLong();\n                        surveillantNameMap.put(id, doc.get(\"nom_surveillant\").getAsString());\n                    }\n\n                    // Associer les données aux pointages\n                    for (Pointage p : pointageList) {\n                        if (p.getId_surveillant() != null) {\n                            String nom = surveillantNameMap.get(p.getId_surveillant());\n                            p.setNom_surveillant(nom != null ? nom : \"Surveillant inconnu\");\n                        } else {\n                            p.setNom_surveillant(\"Surveillant inconnu\");\n                        }\n                    }\n\n                    Log.d(\"HistoriqueViewModel\", \"fetchSurveillantDataAndBind: setting LiveData with \" + pointageList.size() + \" pointages\");\n                    historiqueLiveData.setValue(pointageList);\n                } catch (Exception e) {\n                    Log.e(\"HistoriqueViewModel\", \"fetchSurveillantDataAndBind: error processing surveillants\", e);\n                    e.printStackTrace();\n                    historiqueLiveData.setValue(pointageList);\n                }\n            }\n\n            @Override\n            public void onError(Exception error) {\n                Log.e(\"HistoriqueViewModel\", \"fetchSurveillantDataAndBind: error fetching surveillants\", error);\n                historiqueLiveData.setValue(pointageList);\n            }\n        });\n    }\n\n    private String normalizeString(String str) {\n        if (str == null) return \"\";\n        // Trim first to remove leading/trailing spaces\n        String trimmed = str.trim();\n        String clean = trimmed.replaceAll(\"\\\\s+\", \"\").toLowerCase(Locale.ROOT);\n        return Normalizer.normalize(clean, Normalizer.Form.NFD)\n                .replaceAll(\"\\\\p{M}\", \"\"); // remove diacritical marks\n    }\n\n    public void deletePointage(String documentId, OnDeleteListener listener) {\n        String filter = \"id_pointage=eq.\" + documentId;\n\n        supabaseClient.delete(\"pointage\", filter, new SupabaseClient.SupabaseCallback() {\n            @Override\n            public void onSuccess(JsonArray result) {\n                if (listener != null) listener.onSuccess();\n                loadHistorique();\n            }\n\n            @Override\n            public void onError(Exception error) {\n                if (listener != null) listener.onFailure(error);\n            }\n        });\n    }\n\n    public interface OnDeleteListener {\n        void onSuccess();\n        void onFailure(Exception e);\n    }\n\n    public LiveData<List<Pointage>> getHistorique() {\n        return historiqueLiveData;\n    }\n}",
+                    "language": "java"
+                },
+                "codebaseEnabled": true
+            },
+            "createdAt": 1760512568027,
+            "isInternal": false,
+            "rawContent": {
+                "type": "doc",
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "voici la nouvelle structure de la table planningsurveillance create table public.planning_surveillance ("
+                            }
+                        ]
+                    },
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "  id_planning bigserial not null,"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "  id_examen bigint not null,"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "  numero_salle character varying(255) not null,"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "  id_surveillant bigint not null,"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "  date_examen character varying(255) not null,"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "  heure_debut character varying(255) not null,"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "  heure_fin character varying(255) not null,"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "  constraint planning_surveillance_pkey primary key (id_planning),"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "  constraint planning_surveillance_id_examen_fkey foreign KEY (id_examen) references examen (id_examen) on delete CASCADE,"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "  constraint planning_surveillance_id_surveillant_fkey foreign KEY (id_surveillant) references surveillant (id_surveillant) on delete CASCADE,"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "  constraint planning_surveillance_numero_salle_fkey foreign KEY (numero_salle) references salle (numero_salle) on delete CASCADE"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": ") TABLESPACE pg_default;"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "autoAppliedRules": []
+        },
+        {
+            "id": "8ef4a9ee-4bbc-4704-a1a5-e515b4e560f8",
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "thought",
+                    "text": "**Preparing to inspect repository rules**"
+                },
+                {
+                    "type": "toolCall",
+                    "toolCallId": "call_tfLcBMjK9xcnYWF66dXFCmrA",
+                    "statusText": "Viewed file (lines 1:70)",
+                    "status": "SUCCESS",
+                    "context": {
+                        "files": [
+                            {
+                                "path": ".zencoder/rules/repo.md",
+                                "fsPath": "D:/POINTAGE/.zencoder/rules/repo.md"
+                            }
+                        ]
+                    },
+                    "isHidden": false
+                },
+                {
+                    "type": "thought",
+                    "text": "**Analyzing schema changes impact**"
+                },
+                {
+                    "type": "toolCall",
+                    "toolCallId": "call_XAE8AznDNufxQ8WkWlTzHoOj",
+                    "statusText": "Viewed file (from the beginning up to line 400)",
+                    "status": "SUCCESS",
+                    "context": {
+                        "files": [
+                            {
+                                "path": "app/src/main/java/com/example/pointage/ui/historique/HistoriqueViewModel.java",
+                                "fsPath": "D:/POINTAGE/app/src/main/java/com/example/pointage/ui/historique/HistoriqueViewModel.java"
+                            }
+                        ]
+                    },
+                    "isHidden": false
+                },
+                {
+                    "type": "thought",
+                    "text": "**Needing more content to continue**"
+                },
+                {
+                    "type": "toolCall",
+                    "toolCallId": "call_oikTXcKHMZHJSO5UJQmtXlAU",
+                    "statusText": "Viewed file (line 400 and onwards)",
+                    "status": "SUCCESS",
+                    "context": {
+                        "files": [
+                            {
+                                "path": "app/src/main/java/com/example/pointage/ui/historique/HistoriqueViewModel.java",
+                                "fsPath": "D:/POINTAGE/app/src/main/java/com/example/pointage/ui/historique/HistoriqueViewModel.java"
+                            }
+                        ]
+                    },
+                    "isHidden": false
+                },
+                {
+                    "type": "thought",
+                    "text": "**Analyzing table structure changes**"
+                },
+                {
+                    "type": "toolCall",
+                    "toolCallId": "call_EwxkNLRjMgQnFfsApU19IvAV",
+                    "statusText": "Viewed file (lines 1:75)",
+                    "status": "SUCCESS",
+                    "context": {
+                        "files": [
+                            {
+                                "path": "app/src/main/java/com/example/pointage/ui/historique/DateUtils.java",
+                                "fsPath": "D:/POINTAGE/app/src/main/java/com/example/pointage/ui/historique/DateUtils.java"
+                            }
+                        ]
+                    },
+                    "isHidden": false
+                },
+                {
+                    "type": "toolCall",
+                    "toolCallId": "call_JkzLmSmJS96qjzIxShfQp2cx",
+                    "statusText": "Viewed file (lines 1:291)",
+                    "status": "SUCCESS",
+                    "context": {
+                        "files": [
+                            {
+                                "path": "app/src/main/java/com/example/pointage/SupabaseClient.java",
+                                "fsPath": "D:/POINTAGE/app/src/main/java/com/example/pointage/SupabaseClient.java"
+                            }
+                        ]
+                    },
+                    "isHidden": false
+                },
+                {
+                    "type": "toolCall",
+                    "toolCallId": "call_aQTbUXCdMyTZPI0Ds3tF8aee",
+                    "title": "File search",
+                    "statusText": "Done",
+                    "status": "SUCCESS",
+                    "isHidden": false
+                },
+                {
+                    "type": "toolCall",
+                    "toolCallId": "call_YKbOKpyImP4Bokm5Z03JKhzw",
+                    "statusText": "Viewed file (lines 1:35)",
+                    "status": "SUCCESS",
+                    "context": {
+                        "files": [
+                            {
+                                "path": "supabase_planning_surveillance_setup.sql",
+                                "fsPath": "D:/POINTAGE/supabase_planning_surveillance_setup.sql"
+                            }
+                        ]
+                    },
+                    "isHidden": false
+                },
+                {
+                    "type": "toolCall",
+                    "toolCallId": "call_iO9a7CKGu3WiofQwZFT18bYU",
+                    "statusText": "Viewed file (lines 1:34)",
+                    "status": "SUCCESS",
+                    "context": {
+                        "files": [
+                            {
+                                "path": "app/src/main/java/com/example/pointage/ui/historique/Pointage.java",
+                                "fsPath": "D:/POINTAGE/app/src/main/java/com/example/pointage/ui/historique/Pointage.java"
+                            }
+                        ]
+                    },
+                    "isHidden": false
+                },
+                {
+                    "type": "toolCall",
+                    "toolCallId": "call_KzHlc3X8laPfJacDEP7MEZ80",
+                    "title": "",
+                    "statusText": "File not found",
+                    "status": "WARNING",
+                    "isHidden": false
+                },
+                {
+                    "type": "toolCall",
+                    "toolCallId": "call_VObeoq3JTppaDnGK7NlfZpHO",
+                    "title": "File search",
+                    "statusText": "Done",
+                    "status": "SUCCESS",
+                    "isHidden": false
+                },
+                {
+                    "type": "toolCall",
+                    "toolCallId": "call_7KG7sbkkhbSe15Cn6HrdHGIk",
+                    "statusText": "Viewed file (from the beginning up to line 400)",
+                    "status": "SUCCESS",
+                    "context": {
+                        "files": [
+                            {
+                                "path": "app/src/main/java/com/example/pointage/ui/sanction/SanctionViewModel.java",
+                                "fsPath": "D:/POINTAGE/app/src/main/java/com/example/pointage/ui/sanction/SanctionViewModel.java"
+                            }
+                        ]
+                    },
+                    "isHidden": false
+                },
+                {
+                    "type": "toolCall",
+                    "toolCallId": "call_il4feR8FLYIH1lgUr6h5iIl6",
+                    "statusText": "Viewed file (line 400 and onwards)",
+                    "status": "SUCCESS",
+                    "context": {
+                        "files": [
+                            {
+                                "path": "app/src/main/java/com/example/pointage/ui/sanction/SanctionViewModel.java",
+                                "fsPath": "D:/POINTAGE/app/src/main/java/com/example/pointage/ui/sanction/SanctionViewModel.java"
+                            }
+                        ]
+                    },
+                    "isHidden": false
+                },
+                {
+                    "type": "toolCall",
+                    "toolCallId": "call_W36ktzW4zwoX3tXUbMNG6mHC",
+                    "statusText": "Viewed file (lines 1:151)",
+                    "status": "SUCCESS",
+                    "context": {
+                        "files": [
+                            {
+                                "path": "app/src/main/java/com/example/pointage/ui/historique/HistoriqueFragment.java",
+                                "fsPath": "D:/POINTAGE/app/src/main/java/com/example/pointage/ui/historique/HistoriqueFragment.java"
+                            }
+                        ]
+                    },
+                    "isHidden": false
+                },
+                {
+                    "type": "text",
+                    "text": "# Mise à jour prise en compte\n\nLa table `planning_surveillance` est désormais définie comme suit :\n\n```sql\nCREATE TABLE public.planning_surveillance (\n    id_planning        BIGSERIAL            NOT NULL,\n    id_examen          BIGINT               NOT NULL,\n    numero_salle       VARCHAR(255)         NOT NULL,\n    id_surveillant     BIGINT               NOT NULL,\n    date_examen        VARCHAR(255)         NOT NULL,\n    heure_debut        VARCHAR(255)         NOT NULL,\n    heure_fin          VARCHAR(255)         NOT NULL,\n    CONSTRAINT planning_surveillance_pkey PRIMARY KEY (id_planning),\n    CONSTRAINT planning_surveillance_id_examen_fkey\n        FOREIGN KEY (id_examen) REFERENCES examen (id_examen) ON DELETE CASCADE,\n    CONSTRAINT planning_surveillance_id_surveillant_fkey\n        FOREIGN KEY (id_surveillant) REFERENCES surveillant (id_surveillant) ON DELETE CASCADE,\n    CONSTRAINT planning_surveillance_numero_salle_fkey\n        FOREIGN KEY (numero_salle) REFERENCES salle (numero_salle) ON DELETE CASCADE\n) TABLESPACE pg_default;\n```\n\n## Points importants à retenir\n\n- **Champs heure et date** : `heure_debut`, `heure_fin` et `date_examen` sont désormais stockés en `VARCHAR(255)`. Le code Android convertit donc ces valeurs en dates avec `DateUtils.parseSupabaseTimestamp()` lorsque nécessaire.\n- **Intégrité référentielle** : les contraintes `FOREIGN KEY` vers `examen`, `surveillant` et `salle` sont conservées avec suppression en cascade.\n- **Conséquences côté application** :\n  - Veillez à ce que les valeurs insérées dans `heure_debut`, `heure_fin` et `date_examen` utilisent un format cohérent (ex. `yyyy-MM-dd` pour la date et `yyyy-MM-dd'T'HH:mm:ss` pour les heures) afin que le parsing fonctionne correctement.\n  - Les requêtes existantes dans `HistoriqueViewModel` et `SanctionViewModel` restent compatibles, car elles traitent les colonnes comme des chaînes et réalisent le parsing côté Java.\n\nSi vous avez besoin d’adapter d’autres parties du code (par exemple, validations supplémentaires ou conversion de formats), dites-le-moi et je vous guiderai."
+                }
+            ],
+            "context": {
+                "author": "Code agent",
+                "operationId": "b95f4219-44a5-4b93-aad8-3687a92861c9",
+                "usageStatistics": {
+                    "llmCallsUsedForAnswer": 14.0,
+                    "llmCallsUsedTotal": 14.0,
+                    "llmCallsLimit": 25.0,
+                    "limitRenewalMillisecondTimestamp": 1760598977856
+                }
+            },
+            "createdAt": 1760512581847,
+            "isInternal": false
+        },
+        {
+            "id": "3ceffabc-d39a-4976-9d16-d0b3786f17f5",
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "c'est le numero de salle dans planning surveillance qui doit etre afficher dans les notifications"
+                }
+            ],
+            "context": {
+                "currentFile": {
+                    "path": "app/src/main/java/com/example/pointage/ui/historique/HistoriqueViewModel.java",
+                    "fsPath": "D:/POINTAGE/app/src/main/java/com/example/pointage/ui/historique/HistoriqueViewModel.java",
+                    "sources": [
+                        "opened_tab"
+                    ],
+                    "content": "package com.example.pointage.ui.historique;\n\nimport android.util.Log;\n\nimport androidx.lifecycle.LiveData;\nimport androidx.lifecycle.MutableLiveData;\nimport androidx.lifecycle.ViewModel;\n\nimport com.example.pointage.SupabaseClient;\nimport com.example.pointage.ui.historique.DateUtils;\nimport com.google.gson.JsonArray;\nimport com.google.gson.JsonObject;\n\nimport java.net.UnknownHostException;\nimport java.text.ParseException;\nimport java.util.ArrayList;\nimport java.util.Calendar;\nimport java.util.Date;\nimport java.util.HashMap;\nimport java.util.List;\nimport java.util.Locale;\nimport java.util.Map;\nimport java.text.Normalizer;\n\npublic class HistoriqueViewModel extends ViewModel {\n\n    private String getSession(Date time) {\n        Calendar cal = Calendar.getInstance();\n        cal.setTime(time);\n        int hour = cal.get(Calendar.HOUR_OF_DAY);\n        return hour < 12 ? \"Matin\" : \"Après-midi\";\n    }\n\n    private final MutableLiveData<List<Pointage>> historiqueLiveData = new MutableLiveData<>();\n    private final SupabaseClient supabaseClient = SupabaseClient.getInstance();\n\n    private int monthFilter = Calendar.getInstance().get(Calendar.MONTH);\n    private int yearFilter = Calendar.getInstance().get(Calendar.YEAR);\n\n    public HistoriqueViewModel() throws UnknownHostException {\n        loadHistorique();\n    }\n\n    public void setMonth(int month) {\n        this.monthFilter = month;\n        loadHistorique();\n    }\n\n    public void setYear(int year) {\n        this.yearFilter = year;\n        loadHistorique();\n    }\n\n    public void loadHistorique() {\n        // Filtrer côté serveur par mois/année sélectionnés\n        Calendar startCal = Calendar.getInstance();\n        startCal.set(Calendar.YEAR, yearFilter);\n        startCal.set(Calendar.MONTH, monthFilter); // 0-based\n        startCal.set(Calendar.DAY_OF_MONTH, 1);\n        startCal.set(Calendar.HOUR_OF_DAY, 0);\n        startCal.set(Calendar.MINUTE, 0);\n        startCal.set(Calendar.SECOND, 0);\n        startCal.set(Calendar.MILLISECOND, 0);\n        String start = DateUtils.formatForSupabase(startCal.getTime());\n\n        Calendar nextCal = (Calendar) startCal.clone();\n        nextCal.add(Calendar.MONTH, 1);\n        String nextStart = DateUtils.formatForSupabase(nextCal.getTime());\n\n        Log.d(\"HistoriqueViewModel\", \"Date range: start=\" + start + \", nextStart=\" + nextStart);\n        String filter = \"heure_pointage=gte.\" + start\n                + \"&heure_pointage=lt.\" + nextStart\n                + \"&order=heure_pointage.desc\";\n        Log.d(\"HistoriqueViewModel\", \"Filter string: \" + filter);\n\n        supabaseClient.select(\"pointage\", \"*\", filter, new SupabaseClient.SupabaseCallback() {\n            @Override\n            public void onSuccess(JsonArray result) {\n                Log.d(\"HistoriqueViewModel\", \"loadHistorique: received \" + result.size() + \" pointages from Supabase\");\n                List<Pointage> allPointages = new ArrayList<>();\n                try {\n                    for (int i = 0; i < result.size(); i++) {\n                        JsonObject doc = result.get(i).getAsJsonObject();\n                        Pointage p = new Pointage();\n                        p.setId(String.valueOf(doc.get(\"id_pointage\").getAsLong()));\n                        p.setId_pointage(doc.get(\"id_pointage\").getAsLong());\n\n                        // Conversion du timestamp Supabase en Date\n                        String timestampStr = doc.get(\"heure_pointage\").getAsString();\n                        Date date = DateUtils.parseSupabaseTimestamp(timestampStr);\n                        p.setHeure_pointage(date);\n\n                        // Safety: filtre côté client si jamais le serveur renvoie hors intervalle\n                        Calendar c = Calendar.getInstance();\n                        c.setTime(date);\n                        if (c.get(Calendar.YEAR) != yearFilter || c.get(Calendar.MONTH) != monthFilter) {\n                            continue; // skip\n                        }\n\n                        p.setId_surveillant(doc.get(\"id_surveillant\").getAsLong());\n                        p.setRetard(doc.get(\"retard\").getAsBoolean());\n\n                        // Numero salle depuis pointage\n                        if (doc.has(\"numero_salle\") && !doc.get(\"numero_salle\").isJsonNull()) {\n                            p.setNumero_salle(doc.get(\"numero_salle\").getAsString());\n                        } else {\n                            p.setNumero_salle(null);\n                        }\n\n                        // Nom surveillant sera rempli par fetchSurveillantDataAndBind\n                        p.setNom_surveillant(\"Chargement...\");\n                        allPointages.add(p);\n                    }\n                    Log.d(\"HistoriqueViewModel\", \"loadHistorique: after filtering, \" + allPointages.size() + \" pointages remain\");\n                    fetchSurveillantDataAndBind(allPointages);\n                } catch (Exception e) {\n                    Log.e(\"HistoriqueViewModel\", \"loadHistorique: error parsing pointages\", e);\n                    e.printStackTrace();\n                }\n            }\n\n            @Override\n            public void onError(Exception error) {\n                Log.e(\"HistoriqueViewModel\", \"loadHistorique: error loading pointages\", error);\n                error.printStackTrace();\n            }\n        });\n    }\n\n    public void performScan(String numeroSalleSurveillant, Long idSurveillant, String nomSurveillant, final OnScanResultListener listener) {\n        Date now = new Date();\n        String session = getSession(now);\n        String currentDate = DateUtils.getCurrentDateString();\n\n        Log.d(\"HistoriqueViewModel\", \"performScan: numeroSalleSurveillant=\" + numeroSalleSurveillant + \", idSurveillant=\" + idSurveillant + \", nomSurveillant=\" + nomSurveillant + \", currentDate=\" + currentDate);\n\n        // Vérifier d'abord si le surveillant est planifié dans cette salle à cette heure\n        // via la table planning_surveillance (jointure avec examen pour la date)\n        // On filtre directement par id_surveillant\n        String planningFilter = \"id_surveillant=eq.\" + idSurveillant;\n\n        supabaseClient.select(\"planning_surveillance\", \"*\", planningFilter, new SupabaseClient.SupabaseCallback() {\n            @Override\n            public void onSuccess(JsonArray planningResult) {\n                Log.d(\"HistoriqueViewModel\", \"planningResult.size()=\" + planningResult.size());\n                if (planningResult.size() == 0) {\n                    if (listener != null) listener.onScanFailure(\"Ce surveillant n'est pas planifié dans cette salle aujourd'hui.\");\n                    return;\n                }\n\n                // Vérifier si le surveillant est planifié dans la salle scannée\n                // La table planning_surveillance a une ligne par surveillant/salle\n                boolean anyMatch = false;\n                final String[] matchedSalleHolder = {null};\n                Long matchedIdExamen = null;\n                \n                for (int i = 0; i < planningResult.size(); i++) {\n                    JsonObject planning = planningResult.get(i).getAsJsonObject();\n\n                    // Vérifier si la salle correspond\n                    String numeroSallePlanning = planning.get(\"numero_salle\").getAsString();\n                    Log.d(\"HistoriqueViewModel\", \"Planning \" + i + \": numeroSallePlanning=\" + numeroSallePlanning + \", id_surveillant=\" + planning.get(\"id_surveillant\").getAsLong());\n                    \n                    String[] surveillantSalles = numeroSalleSurveillant.split(\",\");\n                    boolean salleMatch = false;\n                    for (String survSalle : surveillantSalles) {\n                        if (numeroSallePlanning.trim().equals(survSalle.trim())) {\n                            salleMatch = true;\n                            matchedSalleHolder[0] = numeroSallePlanning.trim();\n                            matchedIdExamen = planning.get(\"id_examen\").getAsLong();\n                            break;\n                        }\n                    }\n                    \n                    Log.d(\"HistoriqueViewModel\", \"Salle match: \" + salleMatch + \" for \" + numeroSalleSurveillant);\n                    if (salleMatch) {\n                        anyMatch = true;\n                        Log.d(\"HistoriqueViewModel\", \"MATCH FOUND! Surveillant is scheduled in salle \" + matchedSalleHolder[0]);\n                        break;\n                    }\n                }\n\n                Log.d(\"HistoriqueViewModel\", \"Final anyMatch value: \" + anyMatch);\n                if (!anyMatch) {\n                    if (listener != null) listener.onScanFailure(\"Ce surveillant n'est pas planifié dans cette salle aujourd'hui.\");\n                    return;\n                }\n                \n                final Long finalMatchedIdExamen = matchedIdExamen;\n\n                // Filtrer par heure: vérifier si maintenant est entre heure_debut et heure_fin\n                // On vérifie uniquement pour le planning qui correspond à la salle ET à la session\n                boolean isScheduledNow = false;\n                for (int i = 0; i < planningResult.size(); i++) {\n                    JsonObject planning = planningResult.get(i).getAsJsonObject();\n                    \n                    // Vérifier si ce planning correspond à la salle matchée\n                    String numeroSallePlanning = planning.get(\"numero_salle\").getAsString();\n                    if (!numeroSallePlanning.trim().equals(matchedSalleHolder[0])) {\n                        continue;\n                    }\n                    \n                    // Vérifier l'heure pour ce planning spécifique\n                    try {\n                        // Les colonnes heure_debut et heure_fin sont de type timestamp\n                        String heureDebutStr = planning.get(\"heure_debut\").getAsString();\n                        Log.d(\"HistoriqueViewModel\", \"Checking time for planning: heure_debut=\" + heureDebutStr);\n                        \n                        // Parser le timestamp complet\n                        Date heureDebut = DateUtils.parseSupabaseTimestamp(heureDebutStr);\n                        \n                        // Vérifier si l'examen appartient à la même session que le scan actuel\n                        String examenSession = getSession(heureDebut);\n                        if (!examenSession.equals(session)) {\n                            Log.d(\"HistoriqueViewModel\", \"Exam session (\" + examenSession + \") does not match current session (\" + session + \"), skipping\");\n                            continue;\n                        }\n                        \n                        // Permettre le pointage 2 heures avant le début de l'examen\n                        long startMs = heureDebut.getTime() - (2 * 60 * 60 * 1000); // -2 heures en millisecondes\n\n                        Date heureFin = null;\n                        if (planning.has(\"heure_fin\") && !planning.get(\"heure_fin\").isJsonNull()) {\n                            String heureFinStr = planning.get(\"heure_fin\").getAsString();\n                            heureFin = DateUtils.parseSupabaseTimestamp(heureFinStr);\n                            Log.d(\"HistoriqueViewModel\", \"heure_fin=\" + heureFinStr);\n                        }\n                        if (heureFin == null) heureFin = heureDebut;\n                        long endMs = heureFin.getTime();\n\n                        long nowMs = now.getTime();\n                        \n                        // Créer des dates pour l'affichage dans les logs\n                        Date allowedStartTime = new Date(startMs);\n                        \n                        Log.d(\"HistoriqueViewModel\", \"Time check: nowMs=\" + nowMs + \", startMs=\" + startMs + \", endMs=\" + endMs);\n                        Log.d(\"HistoriqueViewModel\", \"Current time: \" + now.toString());\n                        Log.d(\"HistoriqueViewModel\", \"Allowed start time (2h before exam): \" + allowedStartTime.toString());\n                        Log.d(\"HistoriqueViewModel\", \"Exam start time: \" + heureDebut.toString());\n                        Log.d(\"HistoriqueViewModel\", \"End time: \" + heureFin.toString());\n                        Log.d(\"HistoriqueViewModel\", \"Session: \" + session);\n                        \n                        if (nowMs >= startMs && nowMs <= endMs) {\n                            isScheduledNow = true;\n                            Log.d(\"HistoriqueViewModel\", \"Time match found! isScheduledNow=true\");\n                            break;\n                        } else {\n                            Log.d(\"HistoriqueViewModel\", \"Time does not match. nowMs >= startMs: \" + (nowMs >= startMs) + \", nowMs <= endMs: \" + (nowMs <= endMs));\n                        }\n                    } catch (Exception e) {\n                        Log.e(\"HistoriqueViewModel\", \"Error parsing time for planning entry\", e);\n                        // Ignore parsing errors for this planning entry\n                    }\n                }\n                Log.d(\"HistoriqueViewModel\", \"Final isScheduledNow value: \" + isScheduledNow);\n\n                if (!isScheduledNow) {\n                    if (listener != null) listener.onScanFailure(\"Ce surveillant n'est pas planifié dans cette salle pour la session \" + session + \".\");\n                    return;\n                }\n\n                // On a déjà l'id_examen du planning, on peut directement vérifier l'examen\n                if (finalMatchedIdExamen == null) {\n                    if (listener != null) listener.onScanFailure(\"Erreur: ID examen non trouvé dans le planning.\");\n                    return;\n                }\n                \n                Log.d(\"HistoriqueViewModel\", \"Using id_examen from planning: \" + finalMatchedIdExamen);\n\n                // Vérifier d'abord si le surveillant a déjà pointé pour cette session aujourd'hui\n                String startDate = currentDate + \"T00:00:00\";\n                String endDate = currentDate + \"T23:59:59\";\n                String pointageFilter = \"id_surveillant=eq.\" + idSurveillant + \"&heure_pointage=gte.\" + startDate + \"&heure_pointage=lte.\" + endDate;\n                \n                supabaseClient.select(\"pointage\", \"*\", pointageFilter, new SupabaseClient.SupabaseCallback() {\n                    @Override\n                    public void onSuccess(JsonArray pointageResult) {\n                        // Vérifier si un pointage existe déjà pour cette session\n                        boolean hasPointageInCurrentSession = false;\n                        try {\n                            for (int i = 0; i < pointageResult.size(); i++) {\n                                JsonObject p = pointageResult.get(i).getAsJsonObject();\n                                String heurePointageStr = p.get(\"heure_pointage\").getAsString();\n                                Date pointageTime = DateUtils.parseSupabaseTimestamp(heurePointageStr);\n                                String pointageSession = getSession(pointageTime);\n                                \n                                if (pointageSession.equals(session)) {\n                                    hasPointageInCurrentSession = true;\n                                    break;\n                                }\n                            }\n                        } catch (Exception e) {\n                            Log.e(\"HistoriqueViewModel\", \"Error checking existing pointages\", e);\n                        }\n                        \n                        if (hasPointageInCurrentSession) {\n                            if (listener != null) {\n                                listener.onScanFailure(\"Vous avez déjà pointé pour la session \" + session + \" aujourd'hui.\");\n                            }\n                            return;\n                        }\n                        \n                        // Continuer avec la vérification de l'examen\n                        String examenFilter = \"id_examen=eq.\" + finalMatchedIdExamen;\n                        \n                        supabaseClient.select(\"examen\", \"*\", examenFilter, new SupabaseClient.SupabaseCallback() {\n                            @Override\n                            public void onSuccess(JsonArray examenResult) {\n                                if (examenResult.size() == 0) {\n                                    if (listener != null) listener.onScanFailure(\"Aucun examen trouvé pour cet ID.\");\n                                    return;\n                                }\n\n                                try {\n                                    JsonObject examen = examenResult.get(0).getAsJsonObject();\n                                    long idExamen = examen.get(\"id_examen\").getAsLong();\n\n                            // Check for absences in previous sessions\n                            Calendar nowCal = Calendar.getInstance();\n                            nowCal.setTime(now);\n                            long nowMs = nowCal.getTimeInMillis();\n                            String currentSession = getSession(now);\n                            String otherSession = currentSession.equals(\"Matin\") ? \"Après-midi\" : \"Matin\";\n                            Calendar sessionEndCal = Calendar.getInstance();\n                            sessionEndCal.set(nowCal.get(Calendar.YEAR), nowCal.get(Calendar.MONTH), nowCal.get(Calendar.DAY_OF_MONTH),\n                                    otherSession.equals(\"Matin\") ? 12 : 18, 0, 0);\n                            long sessionEndMs = sessionEndCal.getTimeInMillis();\n                            if (nowMs > sessionEndMs) {\n                                // Check if has pointage in other session\n                                String startDate = currentDate + \"T00:00:00\";\n                                String endDate = currentDate + \"T23:59:59\";\n                                String filter = \"id_surveillant=eq.\" + idSurveillant + \"&heure_pointage=gte.\" + startDate + \"&heure_pointage=lte.\" + endDate;\n                                supabaseClient.select(\"pointage\", \"*\", filter, new SupabaseClient.SupabaseCallback() {\n                                    @Override\n                                    public void onSuccess(JsonArray result) {\n                                        boolean hasPointageInOther = false;\n                                        try {\n                                            for (int i = 0; i < result.size(); i++) {\n                                                JsonObject p = result.get(i).getAsJsonObject();\n                                                String heure = p.get(\"heure_pointage\").getAsString();\n                                                Date pointageTime = DateUtils.parseTime(heure);\n                                                String pointageSession = getSession(pointageTime);\n                                                if (pointageSession.equals(otherSession)) {\n                                                    hasPointageInOther = true;\n                                                    break;\n                                                }\n                                            }\n                                        } catch (Exception e) {\n                                            e.printStackTrace();\n                                        }\n                                        if (!hasPointageInOther) {\n                                            // Record absence for other session\n                                            checkAndInsertSanction(idSurveillant, \"ABSENCE\", currentDate, matchedSalleHolder[0], otherSession, nomSurveillant, null);\n                                        }\n                                    }\n\n                                    @Override\n                                    public void onError(Exception e) {\n                                        e.printStackTrace();\n                                    }\n                                });\n                            }\n\n                            // Choisir le bon examen: si plusieurs (ex: 14h et 16h),\n                            // prendre celui dont l'heure_debut est la plus proche mais <= maintenant.\n                            // S'il n'y en a aucun avant, prendre le plus tôt de la session.\n\n                            JsonObject chosenExam = null;\n                            long bestPastStart = Long.MIN_VALUE;\n                            long bestFutureStart = Long.MAX_VALUE;\n                            JsonObject earliestFutureExam = null;\n                            long maxEndMs = Long.MIN_VALUE;\n\n                            for (int i = 0; i < examenResult.size(); i++) {\n                                JsonObject exam = examenResult.get(i).getAsJsonObject();\n                                String heureDebutStr = exam.get(\"heure_debut\").getAsString();\n                                Date heureDebut = DateUtils.parseTime(heureDebutStr);\n\n                                Calendar debutCal = Calendar.getInstance();\n                                debutCal.setTime(heureDebut);\n                                // Aligner la date sur aujourd'hui pour comparer correctement\n                                debutCal.set(nowCal.get(Calendar.YEAR), nowCal.get(Calendar.MONTH), nowCal.get(Calendar.DAY_OF_MONTH));\n                                long startMs = debutCal.getTimeInMillis();\n\n                                // Calculer heure de fin (si absente, fallback = heure_debut)\n                                Date heureFin = null;\n                                if (exam.has(\"heure_fin\") && !exam.get(\"heure_fin\").isJsonNull()) {\n                                    try { heureFin = DateUtils.parseTime(exam.get(\"heure_fin\").getAsString()); } catch (Exception ignored) {}\n                                }\n                                if (heureFin == null) heureFin = heureDebut;\n                                Calendar finCal = Calendar.getInstance();\n                                finCal.setTime(heureFin);\n                                finCal.set(nowCal.get(Calendar.YEAR), nowCal.get(Calendar.MONTH), nowCal.get(Calendar.DAY_OF_MONTH));\n                                long endMs = finCal.getTimeInMillis();\n                                if (endMs > maxEndMs) maxEndMs = endMs;\n\n                                if (startMs <= nowMs) {\n                                    if (startMs > bestPastStart) {\n                                        bestPastStart = startMs;\n                                        chosenExam = exam;\n                                    }\n                                } else {\n                                    if (startMs < bestFutureStart) {\n                                        bestFutureStart = startMs;\n                                        earliestFutureExam = exam;\n                                    }\n                                }\n                            }\n\n                            if (chosenExam == null) {\n                                // Aucun examen avant maintenant: prendre le plus tôt à venir\n                                chosenExam = earliestFutureExam != null ? earliestFutureExam : examenResult.get(0).getAsJsonObject();\n                            }\n\n                            Long examenId = chosenExam.get(\"id_examen\").getAsLong();\n                            String heureDebutStr = chosenExam.get(\"heure_debut\").getAsString();\n                            Date heureDebut = DateUtils.parseTime(heureDebutStr);\n\n                            // Calcul des bornes de l'examen choisi\n                            Calendar debutCal = Calendar.getInstance();\n                            debutCal.setTime(heureDebut);\n                            debutCal.set(nowCal.get(Calendar.YEAR), nowCal.get(Calendar.MONTH), nowCal.get(Calendar.DAY_OF_MONTH));\n                            long startMsChosen = debutCal.getTimeInMillis();\n                            // heure_fin du chosen (si absente, fallback = heure_debut)\n                            Date heureFinChosen = null;\n                            if (chosenExam.has(\"heure_fin\") && !chosenExam.get(\"heure_fin\").isJsonNull()) {\n                                try { heureFinChosen = DateUtils.parseTime(chosenExam.get(\"heure_fin\").getAsString()); } catch (Exception ignored) {}\n                            }\n                            if (heureFinChosen == null) heureFinChosen = heureDebut;\n                            Calendar finCalChosen = Calendar.getInstance();\n                            finCalChosen.setTime(heureFinChosen);\n                            finCalChosen.set(nowCal.get(Calendar.YEAR), nowCal.get(Calendar.MONTH), nowCal.get(Calendar.DAY_OF_MONTH));\n                            long endMsChosen = finCalChosen.getTimeInMillis();\n\n                            // Règle demandée: si scan après la fin DU DERNIER EXAMEN de la session/salle du jour → ABSENT (pas de pointage)\n                            boolean afterAllExams = nowMs > maxEndMs;\n                            if (afterAllExams) {\n                                // Check if absence already recorded for this session\n                                checkAndInsertSanction(idSurveillant, \"ABSENCE\", currentDate, matchedSalleHolder[0], currentSession, nomSurveillant, new SupabaseClient.SupabaseCallback() {\n                                    @Override\n                                    public void onSuccess(JsonArray result) {\n                                        // Absence enregistrée\n                                    }\n\n                                    @Override\n                                    public void onError(Exception e) {\n                                        e.printStackTrace();\n                                    }\n                                });\n                                if (listener != null) listener.onScanFailure(\"Pointage refusé: vous êtes considéré absent pour \" + currentSession + \" (salle \" + numeroSalleSurveillant + \").\");\n                                return;\n                            }\n\n                            // Sinon: retard si on scanne après le début de l'examen choisi\n                            boolean isRetard = nowMs > startMsChosen;\n\n                            String formattedDateTime = DateUtils.formatForSupabase(now);\n\n                            JsonObject newPointageData = new JsonObject();\n                            newPointageData.addProperty(\"heure_pointage\", formattedDateTime);\n                            newPointageData.addProperty(\"id_surveillant\", idSurveillant);\n                            newPointageData.addProperty(\"retard\", isRetard);\n                            newPointageData.addProperty(\"numero_salle\", matchedSalleHolder[0]);\n                            supabaseClient.insert(\"pointage\", newPointageData, new SupabaseClient.SupabaseCallback() {\n                                @Override\n                                public void onSuccess(JsonArray insertResult) {\n                                    // Enregistrer le retard dans la table sanction si nécessaire\n                                    if (isRetard) {\n                                        checkAndInsertSanction(idSurveillant, \"RETARD\", currentDate, matchedSalleHolder[0], currentSession, nomSurveillant, new SupabaseClient.SupabaseCallback() {\n                                            @Override\n                                            public void onSuccess(JsonArray result) {\n                                                // Retard enregistré\n                                            }\n\n                                            @Override\n                                            public void onError(Exception e) {\n                                                e.printStackTrace();\n                                            }\n                                        });\n                                    }\n                                    if (listener != null) {\n                                        String message = isRetard ?\n                                                \"Pointage enregistré avec succès pour \" + nomSurveillant + \"! (En retard)\" :\n                                                \"Pointage enregistré avec succès pour \" + nomSurveillant + \"! (À l'heure)\";\n                                        listener.onScanSuccess(message);\n                                    }\n                                    loadHistorique();\n                                }\n\n                                @Override\n                                public void onError(Exception e) {\n                                    if (listener != null) listener.onScanFailure(\"Erreur d'enregistrement: \" + e.getMessage());\n                                }\n                            });\n\n                        } catch (ParseException e) {\n                            if (listener != null) listener.onScanFailure(\"Erreur de format d'heure: \" + e.getMessage());\n                        } catch (Exception e) {\n                            if (listener != null) listener.onScanFailure(\"Erreur: \" + e.getMessage());\n                        }\n                    }\n\n                    @Override\n                    public void onError(Exception error) {\n                        if (listener != null) listener.onScanFailure(\"Échec de la recherche d'examen: \" + error.getMessage());\n                    }\n                });\n            }\n\n            @Override\n            public void onError(Exception error) {\n                if (listener != null) listener.onScanFailure(\"Échec de la vérification des pointages existants: \" + error.getMessage());\n            }\n        });\n            }\n\n            @Override\n            public void onError(Exception error) {\n                if (listener != null) listener.onScanFailure(\"Échec de la vérification du surveillant: \" + error.getMessage());\n            }\n        });\n    }\n\n    public interface OnScanResultListener {\n        void onScanSuccess(String message);\n        void onScanFailure(String errorMessage);\n    }\n\n    private void checkAndInsertSanction(long idSurveillant, String typeSanction, String date, String numeroSalle, String session, String nomSurveillant, SupabaseClient.SupabaseCallback callback) {\n        // Check if sanction already exists\n        String filter = \"id_surveillant=eq.\" + idSurveillant + \"&type=eq.\" + typeSanction + \"&date_examen=eq.\" + date + \"&numero_salle=eq.\" + numeroSalle + \"&session=eq.\" + session;\n        supabaseClient.select(\"sanction\", \"*\", filter, new SupabaseClient.SupabaseCallback() {\n            @Override\n            public void onSuccess(JsonArray result) {\n                if (result.size() == 0) {\n                    // No existing sanction, insert\n                    JsonObject sanctionData = new JsonObject();\n                    sanctionData.addProperty(\"id_surveillant\", idSurveillant);\n                    sanctionData.addProperty(\"type\", typeSanction);\n                    sanctionData.addProperty(\"date_examen\", date);\n                    sanctionData.addProperty(\"numero_salle\", numeroSalle);\n                    sanctionData.addProperty(\"session\", session);\n                    sanctionData.addProperty(\"nom_surveillant\", nomSurveillant);\n                    supabaseClient.insert(\"sanction\", sanctionData, callback);\n                } else {\n                    // Already exists, do nothing\n                    try {\n                        if (callback != null) callback.onSuccess(result);\n                    } catch (UnknownHostException e) {\n                        if (callback != null) callback.onError(e);\n                    }\n                }\n            }\n\n            @Override\n            public void onError(Exception e) {\n                if (callback != null) callback.onError(e);\n            }\n        });\n    }\n\n    private void fetchSurveillantDataAndBind(List<Pointage> pointageList) {\n        Log.d(\"HistoriqueViewModel\", \"fetchSurveillantDataAndBind: processing \" + pointageList.size() + \" pointages\");\n        List<Long> surveillantIds = new ArrayList<>();\n        for (Pointage p : pointageList) {\n            if (p.getId_surveillant() != null) {\n                surveillantIds.add(p.getId_surveillant());\n            }\n        }\n\n        if (surveillantIds.isEmpty()) {\n            Log.d(\"HistoriqueViewModel\", \"fetchSurveillantDataAndBind: no surveillant IDs, setting empty list\");\n            historiqueLiveData.setValue(pointageList);\n            return;\n        }\n        \n        Log.d(\"HistoriqueViewModel\", \"fetchSurveillantDataAndBind: fetching data for \" + surveillantIds.size() + \" surveillants\");\n\n        // Interroger la table surveillant\n        String surveillantIdsStr = String.join(\",\", surveillantIds.stream().map(String::valueOf).toArray(String[]::new));\n        String filter = \"id_surveillant=in.(\" + surveillantIdsStr + \")\";\n\n        supabaseClient.select(\"surveillant\", \"*\", filter, new SupabaseClient.SupabaseCallback() {\n            @Override\n            public void onSuccess(JsonArray result) {\n                Log.d(\"HistoriqueViewModel\", \"fetchSurveillantDataAndBind: received \" + result.size() + \" surveillants\");\n                Map<Long, String> surveillantNameMap = new HashMap<>();\n\n                try {\n                    for (int i = 0; i < result.size(); i++) {\n                        JsonObject doc = result.get(i).getAsJsonObject();\n                        Long id = doc.get(\"id_surveillant\").getAsLong();\n                        surveillantNameMap.put(id, doc.get(\"nom_surveillant\").getAsString());\n                    }\n\n                    // Associer les données aux pointages\n                    for (Pointage p : pointageList) {\n                        if (p.getId_surveillant() != null) {\n                            String nom = surveillantNameMap.get(p.getId_surveillant());\n                            p.setNom_surveillant(nom != null ? nom : \"Surveillant inconnu\");\n                        } else {\n                            p.setNom_surveillant(\"Surveillant inconnu\");\n                        }\n                    }\n\n                    Log.d(\"HistoriqueViewModel\", \"fetchSurveillantDataAndBind: setting LiveData with \" + pointageList.size() + \" pointages\");\n                    historiqueLiveData.setValue(pointageList);\n                } catch (Exception e) {\n                    Log.e(\"HistoriqueViewModel\", \"fetchSurveillantDataAndBind: error processing surveillants\", e);\n                    e.printStackTrace();\n                    historiqueLiveData.setValue(pointageList);\n                }\n            }\n\n            @Override\n            public void onError(Exception error) {\n                Log.e(\"HistoriqueViewModel\", \"fetchSurveillantDataAndBind: error fetching surveillants\", error);\n                historiqueLiveData.setValue(pointageList);\n            }\n        });\n    }\n\n    private String normalizeString(String str) {\n        if (str == null) return \"\";\n        // Trim first to remove leading/trailing spaces\n        String trimmed = str.trim();\n        String clean = trimmed.replaceAll(\"\\\\s+\", \"\").toLowerCase(Locale.ROOT);\n        return Normalizer.normalize(clean, Normalizer.Form.NFD)\n                .replaceAll(\"\\\\p{M}\", \"\"); // remove diacritical marks\n    }\n\n    public void deletePointage(String documentId, OnDeleteListener listener) {\n        String filter = \"id_pointage=eq.\" + documentId;\n\n        supabaseClient.delete(\"pointage\", filter, new SupabaseClient.SupabaseCallback() {\n            @Override\n            public void onSuccess(JsonArray result) {\n                if (listener != null) listener.onSuccess();\n                loadHistorique();\n            }\n\n            @Override\n            public void onError(Exception error) {\n                if (listener != null) listener.onFailure(error);\n            }\n        });\n    }\n\n    public interface OnDeleteListener {\n        void onSuccess();\n        void onFailure(Exception e);\n    }\n\n    public LiveData<List<Pointage>> getHistorique() {\n        return historiqueLiveData;\n    }\n}",
+                    "language": "java"
+                },
+                "codebaseEnabled": true
+            },
+            "createdAt": 1760513044316,
+            "isInternal": false,
+            "rawContent": {
+                "type": "doc",
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "c'est le numero de salle dans planning surveillance qui doit etre afficher dans les notifications"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "autoAppliedRules": []
+        },
+        {
+            "id": "f11d9e5d-0458-44ba-a584-5770a469faa1",
+            "role": "system",
+            "content": [
+                {
+                    "type": "errorText",
+                    "text": "Could not establish websocket connection. Please try again later.",
+                    "actions": [
+                        {
+                            "type": "externalAction",
+                            "title": "Regenerate",
+                            "action": "regenerateLastAnswer"
+                        }
+                    ]
+                }
+            ],
+            "createdAt": 1760513069542,
+            "isInternal": false
+        }
+    ],
+    "isAgent": true,
+    "isNameGenerated": true,
+    "isCustomAgent": false,
+    "isUnitTestsAgent": false,
+    "isE2EAgent": false,
+    "isWebDevAgent": false,
+    "isQnaAgent": false,
+    "isRepoInfoAgent": false,
+    "model": "default"
+}
+}

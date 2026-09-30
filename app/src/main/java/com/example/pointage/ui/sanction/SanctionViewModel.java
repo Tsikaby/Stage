@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.pointage.ui.historique.Pointage;
 import com.example.pointage.ui.historique.DateUtils;
-import com.example.pointage.SupabaseClient;
+import com.example.pointage.ConnectClient;
 import com.example.pointage.utils.NotificationHelper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -33,7 +33,7 @@ import com.google.gson.Gson;
 public class SanctionViewModel extends ViewModel {
 
     private final MutableLiveData<List<SurveillantSanction>> sanctionLiveData = new MutableLiveData<>();
-    private final SupabaseClient supabaseClient = SupabaseClient.getInstance();
+    private final ConnectClient connectClient = ConnectClient.getInstance();
     private SharedPreferences sharedPreferences;
 
     private static final String TAG = "SanctionVM";
@@ -95,7 +95,7 @@ public class SanctionViewModel extends ViewModel {
         final Set<String> validPlannedSurveillants = new HashSet<>(); // (surveillantId|id_examen) valides
 
         // 1️⃣ Charger d'abord les planifications valides
-        supabaseClient.select("planning_surveillance", "*", null, new SupabaseClient.SupabaseCallback() {
+        connectClient.select("planning_surveillance", "*", null, new ConnectClient.ClientCallback() {
             @Override
             public void onSuccess(JsonArray planningResult) {
                 try {
@@ -135,7 +135,7 @@ public class SanctionViewModel extends ViewModel {
                                   Map<Long, String> surveillantRoomById, Map<Long, String> surveillantNameById,
                                   Set<String> validPlannedSurveillants) {
         // 2️⃣ Récupérer tous les surveillants
-        supabaseClient.select("surveillant", "*", null, new SupabaseClient.SupabaseCallback() {
+        connectClient.select("surveillant", "*", null, new ConnectClient.ClientCallback() {
             @Override
             public void onSuccess(JsonArray surveillantResult) {
                 try {
@@ -157,7 +157,7 @@ public class SanctionViewModel extends ViewModel {
                     }
 
                     // 3️⃣ Récupérer tous les examens du mois
-                    supabaseClient.select("examen", "*", null, new SupabaseClient.SupabaseCallback() {
+                    connectClient.select("examen", "*", null, new ConnectClient.ClientCallback() {
                         @Override
                         public void onSuccess(JsonArray examResult) {
                             List<JsonObject> examDocs = new ArrayList<>();
@@ -191,7 +191,7 @@ public class SanctionViewModel extends ViewModel {
                                 }
 
                                 // 4️⃣ Récupérer tous les pointages
-                                supabaseClient.select("pointage", "*", null, new SupabaseClient.SupabaseCallback() {
+                                connectClient.select("pointage", "*", null, new ConnectClient.ClientCallback() {
                                     @Override
                                     public void onSuccess(JsonArray pointageResult) {
                                         Map<Long, Map<String, List<Pointage>>> pointagesByDayAndSession = new HashMap<>();
@@ -440,7 +440,7 @@ public class SanctionViewModel extends ViewModel {
             // pour éviter les doublons et une meilleure UX immédiate
             Log.d(TAG, "Sanction détectée: " + sanction.type + " pour " + sanction.surveillantName);
 
-            supabaseClient.insert("sanction", sanctionData, new SupabaseClient.SupabaseCallback() {
+            connectClient.insert("sanction", sanctionData, new ConnectClient.ClientCallback() {
                 private void done() {
                     synchronized (completed) {
                         completed[0]++;
@@ -504,7 +504,7 @@ public class SanctionViewModel extends ViewModel {
 
         String sanctionFilter = "date_examen=gte." + startDate + "&date_examen=lt." + nextStart;
 
-        supabaseClient.select("sanction", "*", sanctionFilter, new SupabaseClient.SupabaseCallback() {
+        connectClient.select("sanction", "*", sanctionFilter, new ConnectClient.ClientCallback() {
             @Override
             public void onSuccess(JsonArray sanctionResult) {
                 try {
@@ -644,7 +644,7 @@ public class SanctionViewModel extends ViewModel {
 
         String planningFilter = "date_examen=gte." + startDate + "&date_examen=lt." + nextStart;
 
-        supabaseClient.select("planning_surveillance", "*", planningFilter, new SupabaseClient.SupabaseCallback() {
+        connectClient.select("planning_surveillance", "*", planningFilter, new ConnectClient.ClientCallback() {
             @Override
             public void onSuccess(JsonArray planningResult) {
                 if (planningResult.size() == 0) {
@@ -658,7 +658,7 @@ public class SanctionViewModel extends ViewModel {
                 String pointageEndDate = nextStart + "T00:00:00";
                 String pointageFilter = "heure_pointage=gte." + pointageStartDate + "&heure_pointage=lt." + pointageEndDate;
 
-                supabaseClient.select("pointage", "*", pointageFilter, new SupabaseClient.SupabaseCallback() {
+                connectClient.select("pointage", "*", pointageFilter, new ConnectClient.ClientCallback() {
                     @Override
                     public void onSuccess(JsonArray pointageResult) {
                         processPlanningAbsences(planningResult, pointageResult, month, year, sanctionsMap, surveillantNameById);
@@ -702,7 +702,7 @@ public class SanctionViewModel extends ViewModel {
 
         String planningFilter = "date_examen=gte." + startDate + "&date_examen=lt." + nextStart;
 
-        supabaseClient.select("planning_surveillance", "*", planningFilter, new SupabaseClient.SupabaseCallback() {
+        connectClient.select("planning_surveillance", "*", planningFilter, new ConnectClient.ClientCallback() {
             @Override
             public void onSuccess(JsonArray planningResult) {
                 processAdditionalPlanningAbsences(planningResult, sanctionsToSave, surveillantNameById, pointagesByDayAndSession);

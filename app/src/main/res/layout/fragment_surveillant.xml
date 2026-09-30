@@ -78,10 +78,10 @@
 
             <SearchView
                 android:id="@+id/searchViewSurveillants"
-                android:layout_width="match_parent"
+                android:layout_width="320dp"
                 android:layout_height="wrap_content"
-                android:queryHint="Rechercher par nom..."
-                android:background="@android:drawable/editbox_background" />
+                android:background="@android:drawable/editbox_background"
+                android:queryHint="Rechercher par nom..." />
 
         </LinearLayout>
     </androidx.cardview.widget.CardView>

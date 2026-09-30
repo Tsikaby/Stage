@@ -13,3 +13,16 @@
 .externalNativeBuild
 .cxx
 local.properties
+backend/node_modules/
+
+
+# Sensitive data - EmailUtility contains SMTP credentials
+**/EmailUtility.java
+
+# Logs
+*.log
+
+# Android
+*.apk
+*.ap_
+*.dex

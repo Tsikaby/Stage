@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.example.pointage.SupabaseClient;
+import com.example.pointage.ConnectClient;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
@@ -15,16 +15,16 @@ import java.util.List;
 public class SurveillantViewModel extends ViewModel {
 
     private final MutableLiveData<List<Surveillant>> surveillantsLiveData = new MutableLiveData<>();
-    private final SupabaseClient supabaseClient;
+    private final ConnectClient supabaseClient;
 
     public SurveillantViewModel() throws UnknownHostException {
-        supabaseClient = SupabaseClient.getInstance();
+        supabaseClient = ConnectClient.getInstance();
         loadSurveillants();
     }
 
     public void loadSurveillants() {
         // Récupérer la collection "surveillant"
-        supabaseClient.select("surveillant", "*", null, new SupabaseClient.SupabaseCallback() {
+        supabaseClient.select("surveillant", "*", null, new ConnectClient.ClientCallback() {
             @Override
             public void onSuccess(JsonArray result) {
                 List<Surveillant> list = new ArrayList<>();
@@ -36,6 +36,9 @@ public class SurveillantViewModel extends ViewModel {
                         s.setNom_surveillant(doc.get("nom_surveillant").getAsString());
                         s.setNumero_salle(doc.get("numero_salle").getAsString());
                         s.setContact(doc.get("contact").getAsString()); // Utiliser groupe_surveillant comme contact
+                        if (doc.has("email") && !doc.get("email").isJsonNull()) {
+                            s.setEmail(doc.get("email").getAsString());
+                        }
                         list.add(s);
                     }
                     surveillantsLiveData.setValue(list);

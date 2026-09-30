@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 
 import com.example.pointage.databinding.ActivityMainBinding;
 import com.example.pointage.ui.historique.HistoriqueViewModel;
+import com.example.pointage.utils.EmailUtility;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -36,11 +37,11 @@ public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
-    private SupabaseClient supabaseClient;
+    private ConnectClient connectClient;
     private HistoriqueViewModel historiqueViewModel;
 
     // Launcher pour demander la permission POST_NOTIFICATIONS
-    private final ActivityResultLauncher<String> notificationPermissionLauncher = 
+    private final ActivityResultLauncher<String> notificationPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
                     Log.d("MainActivity", "Permission POST_NOTIFICATIONS accordée");
@@ -109,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         try {
-            supabaseClient = SupabaseClient.getInstance();
+            connectClient = ConnectClient.getInstance();
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);
         }
@@ -126,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
             ScanOptions options = new ScanOptions();
             options.setDesiredBarcodeFormats(ScanOptions.QR_CODE);
             options.setPrompt("Alignez le QR code dans le rectangle");
-             options.setCameraId(0);
+            options.setCameraId(0);
             options.setBeepEnabled(true);
             options.setOrientationLocked(true);
             options.setBarcodeImageEnabled(true);
@@ -137,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
         DrawerLayout drawer = binding.drawerLayout;
         NavigationView navigationView = binding.navView;
         mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_home, R.id.nav_surveillant, R.id.nav_historique, R.id.nav_sanction)
+                R.id.nav_home, R.id.nav_pending, R.id.nav_surveillant, R.id.nav_historique, R.id.nav_sanction)
                 .setOpenableLayout(drawer)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
@@ -180,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void performLogout() {
-        // Déconnexion : mettre log=false côté Supabase et nettoyer la session locale
+        // Déconnexion : mettre log=false  et nettoyer la session locale
         String username = getSharedPreferences("login", MODE_PRIVATE).getString("username", null);
 
         if (username != null) {
@@ -188,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
             body.addProperty("log", false);
             String filter = "username=eq." + username;
 
-            supabaseClient.update("utilisateurs", filter, body, new SupabaseClient.SupabaseCallback() {
+            connectClient.update("utilisateurs", filter, body, new ConnectClient.ClientCallback() {
                 @Override
                 public void onSuccess(JsonArray result) {
                     // Nettoyer local et retourner au login
@@ -239,6 +240,9 @@ public class MainActivity extends AppCompatActivity {
         } else if (item.getItemId() == R.id.action_check_absences) {
             forceAbsenceCheck();
             return true;
+        } else if (item.getItemId() == R.id.action_test_email) {
+            testEmailSending();
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -256,11 +260,26 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
+    private void testEmailSending() {
+        new AlertDialog.Builder(this)
+                .setTitle("Test Email")
+                .setMessage("Envoyer un email de test à jeanbaptiste45522@gmail.com ?")
+                .setPositiveButton("Envoyer", (dialog, which) -> {
+                    String testEmail = "jeanbaptiste45522@gmail.com";
+                    EmailUtility.sendTestEmail(testEmail);
+                    Snackbar.make(binding.getRoot(), "Email de test envoyé à " + testEmail + ". Vérifiez votre boîte mail.", Snackbar.LENGTH_LONG)
+                            .setAnchorView(R.id.fab).show();
+                    Log.i("MainActivity", "Test email envoyé à " + testEmail);
+                })
+                .setNegativeButton("Annuler", (dialog, which) -> dialog.dismiss())
+                .show();
+    }
+
     private void checkUserRoleAndShowAdminMenu(NavigationView navigationView) {
         String username = getSharedPreferences("login", MODE_PRIVATE).getString("username", null);
         if (username != null) {
             String filter = "username=eq." + username;
-            supabaseClient.select("utilisateurs", "role", filter, new SupabaseClient.SupabaseCallback() {
+            connectClient.select("utilisateurs", "role", filter, new ConnectClient.ClientCallback() {
                 @Override
                 public void onSuccess(JsonArray result) {
                     if (result.size() > 0) {
