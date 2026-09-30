@@ -25,7 +25,8 @@ public class ConnectClient {
     private static ConnectClient instance;
     private OkHttpClient httpClient;
     private Handler mainHandler;
-
+//l'application mobile et l'api doit etre connecter sur le meme réseaux wifi 
+//Adresse IPV4 du wifi à laquelle ils sont connectés appareil sur laquelle l'api est lancé
     private static final String LOCAL_API_URL = "http://10.28.235.221:8080/api/";
 
     public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
