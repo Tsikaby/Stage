@@ -14,7 +14,7 @@ cd backend
 npm install
 ```
 
-### 2. Configurer la base de données PostgreSQL
+Configurer la base de données PostgreSQL
 
 ```bash
 # Créer la base de données
