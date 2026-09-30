@@ -266,7 +266,7 @@ public class HomeViewModel extends ViewModel {
                                 }
                             }
 
-                            // 3️⃣ Récupérer les notifications d'absences
+                            // Récupérer les notifications d'absences
                             loadAbsenceNotifications(notifications, surveillantNameById, surveillantRoomById, limitDate);
 
                         } catch (Exception e) {

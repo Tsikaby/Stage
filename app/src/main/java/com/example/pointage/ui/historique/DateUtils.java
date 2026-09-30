@@ -13,7 +13,7 @@ public class DateUtils {
         if (timestampStr == null) throw new ParseException("Null timestamp", 0);
         String ts = timestampStr.trim();
 
-        // Try ISO 8601 with timezone (with and without milliseconds)
+
         if (ts.endsWith("Z") || ts.endsWith("z") || ts.matches(".*[+-]\\d{2}:?\\d{2}$")) {
             ParseException last = null;
             for (String pattern : new String[]{
@@ -29,7 +29,7 @@ public class DateUtils {
             if (last != null) throw last;
         }
 
-        // Then try ISO 8601 without timezone (with and without milliseconds)
+
         ParseException lastNoTz = null;
         for (String pattern : new String[]{
                 "yyyy-MM-dd'T'HH:mm:ss.SSS",
@@ -38,7 +38,7 @@ public class DateUtils {
             try {
                 SimpleDateFormat isoNoTz = new SimpleDateFormat(pattern, Locale.getDefault());
                 isoNoTz.setLenient(false);
-                // If input longer, trim to pattern length safely
+
                 int maxLen = pattern.length();
                 String candidate = ts;
                 if (candidate.length() > 19 && pattern.endsWith(".SSS")) {
@@ -50,7 +50,7 @@ public class DateUtils {
             } catch (ParseException e) { lastNoTz = e; }
         }
 
-        // Fallback: space separated (with and without milliseconds)
+
         try {
             String spaceStr = ts.replace('T', ' ');
             ParseException last = null;
@@ -87,12 +87,11 @@ public class DateUtils {
         if (timeStr == null) throw new ParseException("Null time", 0);
         String s = timeStr.trim();
 
-        // If string looks like a full timestamp (contains date or 'T'), parse as ISO timestamp
+
         if (s.contains("T") || s.contains("-")) {
             return parseSupabaseTimestamp(s);
         }
 
-        // Accept both HH:mm:ss and HH:mm
         ParseException last = null;
         for (String pattern : new String[]{"HH:mm:ss", "HH:mm"}) {
             try {

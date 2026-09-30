@@ -193,7 +193,7 @@ public class NotificationHelper {
         }
     }
 
-    // Overload allowing a custom notificationId to avoid overwriting notifications of the same type
+
     public static void showNotification(Context context, String title, String message, String type, int notificationId) {
         if (notificationManager == null) {
             initialize(context);

@@ -38,7 +38,7 @@ public class HistoriqueFragment extends Fragment implements HistoriqueAdapter.On
         binding = FragmentHistoriqueBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        // Use Activity-scoped ViewModel to share updates between Activity and Fragment
+
         historiqueViewModel = new ViewModelProvider(requireActivity()).get(HistoriqueViewModel.class);
         // Initialiser SharedPreferences pour la persistance des notifications affichées
         if (getContext() != null) {

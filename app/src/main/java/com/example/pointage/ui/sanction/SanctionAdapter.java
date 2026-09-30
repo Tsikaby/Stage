@@ -57,7 +57,7 @@ public class SanctionAdapter extends RecyclerView.Adapter<SanctionAdapter.Sancti
         }
 
         public void bind(SurveillantSanction sanction) {
-            // Get month name from its number (0-indexed)
+
             String monthName = new DateFormatSymbols(Locale.getDefault()).getMonths()[sanction.getMois()];
 
             nomSurveillantTextView.setText(sanction.getNom_surveillant());

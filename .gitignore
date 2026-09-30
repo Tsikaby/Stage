@@ -26,6 +26,7 @@ backend/.env
 
 # SQL files (if sensitive)
 *.sql
+!pointage-db.sql
 
 # Sensitive data - EmailUtility contains SMTP credentials
 **/EmailUtility.java
