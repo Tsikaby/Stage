@@ -13,7 +13,7 @@ import androidx.lifecycle.ViewModel;
 import com.example.pointage.ConnectClient;
 import com.example.pointage.ui.historique.DateUtils;
 import com.example.pointage.utils.NotificationHelper;
-import com.example.pointage.utils.EmailUtility;
+//import com.example.pointage.utils.EmailUtility;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.Gson;
@@ -470,7 +470,7 @@ public class HistoriqueViewModel extends ViewModel {
                                         // ✅ Afficher notification de l'absence (une seule fois, persistante après redémarrage)
                                         NotificationHelper.showAbsenceNotification(idSurveillant, nomSurveillant, matchedSalleHolder[0], session, absenceDate);
                                         // ✅ Envoyer email de notification d'absence
-                                        fetchSurveillantEmailAndSendNotification(idSurveillant, nomSurveillant, absenceDate, "ABSENCE");
+                                        //fetchSurveillantEmailAndSendNotification(idSurveillant, nomSurveillant, absenceDate, "ABSENCE");
                                     }
                                     @Override public void onError(Exception e) { e.printStackTrace(); }
                                 });
@@ -499,7 +499,7 @@ public class HistoriqueViewModel extends ViewModel {
                                             // ✅ Afficher notification du retard (une seule fois, persistante après redémarrage)
                                             NotificationHelper.showRetardNotification(idSurveillant, nomSurveillant, matchedSalleHolder[0], retardDate);
                                             // ✅ Envoyer email de notification de retard
-                                            fetchSurveillantEmailAndSendNotification(idSurveillant, nomSurveillant, retardDate, "RETARD");
+                                            //fetchSurveillantEmailAndSendNotification(idSurveillant, nomSurveillant, retardDate, "RETARD");
                                         }
                                         @Override public void onError(Exception e) { e.printStackTrace(); }
                                     });
@@ -621,68 +621,6 @@ public class HistoriqueViewModel extends ViewModel {
             @Override
             public void onError(Exception e) {
                 if (callback != null) callback.onError(e);
-            }
-        });
-    }
-
-    private void fetchSurveillantEmailAndSendNotification(Long idSurveillant, String nomSurveillant, String date, String type) {
-        Log.i("HistoriqueViewModel", "Début envoi email - ID: " + idSurveillant + ", Nom: " + nomSurveillant + ", Type: " + type + ", Date: " + date);
-        String filter = "id_surveillant=eq." + idSurveillant;
-        connectClient.select("surveillant", "*", filter, new ConnectClient.ClientCallback() {
-            @Override
-            public void onSuccess(JsonArray result) {
-                try {
-                    Log.i("HistoriqueViewModel", "Résultat surveillant: " + result.size() + " enregistrements trouvés");
-                    if (result.size() > 0) {
-                        JsonObject doc = result.get(0).getAsJsonObject();
-                        Log.i("HistoriqueViewModel", "Données surveillant: " + doc.toString());
-                        String email = null;
-                        if (doc.has("email") && !doc.get("email").isJsonNull()) {
-                            email = doc.get("email").getAsString();
-                        }
-
-                        final String finalEmail = email;
-                        Log.i("HistoriqueViewModel", "Email récupéré: " + finalEmail);
-                        if (finalEmail != null && !finalEmail.isEmpty()) {
-                            if ("ABSENCE".equals(type)) {
-                                Log.i("HistoriqueViewModel", "Envoi email d'absence à " + finalEmail);
-                                EmailUtility.sendAbsenceNotification(finalEmail, nomSurveillant, date, new EmailUtility.EmailCallback() {
-                                    @Override
-                                    public void onSuccess() {
-                                        Log.i("HistoriqueViewModel", "Email d'absence envoyé avec succès à " + finalEmail);
-                                    }
-                                    @Override
-                                    public void onError(String error) {
-                                        Log.e("HistoriqueViewModel", "Erreur envoi email absence: " + error);
-                                    }
-                                });
-                            } else if ("RETARD".equals(type)) {
-                                Log.i("HistoriqueViewModel", "Envoi email de retard à " + finalEmail);
-                                EmailUtility.sendLateNotification(finalEmail, nomSurveillant, date, new EmailUtility.EmailCallback() {
-                                    @Override
-                                    public void onSuccess() {
-                                        Log.i("HistoriqueViewModel", "Email de retard envoyé avec succès à " + finalEmail);
-                                    }
-                                    @Override
-                                    public void onError(String error) {
-                                        Log.e("HistoriqueViewModel", "Erreur envoi email retard: " + error);
-                                    }
-                                });
-                            }
-                        } else {
-                            Log.w("HistoriqueViewModel", "Aucun email disponible pour le surveillant " + idSurveillant + " (" + nomSurveillant + ")");
-                        }
-                    } else {
-                        Log.w("HistoriqueViewModel", "Aucun surveillant trouvé avec ID: " + idSurveillant);
-                    }
-                } catch (Exception e) {
-                    Log.e("HistoriqueViewModel", "Erreur lors de la récupération de l'email du surveillant", e);
-                }
-            }
-
-            @Override
-            public void onError(Exception e) {
-                Log.e("HistoriqueViewModel", "Erreur lors de la récupération des données du surveillant", e);
             }
         });
     }
@@ -939,7 +877,7 @@ public class HistoriqueViewModel extends ViewModel {
                                                             NotificationHelper.showAbsenceNotification(surveillantId, nomSurveillant, numeroSalle, sessionFinal, absenceDate);
                                                             // ✅ Envoyer email de notification d'absence
                                                             Log.i("HistoriqueViewModel", "📧 DÉCLENCHEMENT ENVOI EMAIL pour absence: " + nomSurveillant + " (ID: " + surveillantId + ")");
-                                                            fetchSurveillantEmailAndSendNotification(surveillantId, nomSurveillant, absenceDate, "ABSENCE");
+                                                            //fetchSurveillantEmailAndSendNotification(surveillantId, nomSurveillant, absenceDate, "ABSENCE");
                                                         }
 
 
