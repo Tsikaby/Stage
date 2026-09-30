@@ -139,7 +139,6 @@ public class SurveillantAdapter extends RecyclerView.Adapter<SurveillantAdapter.
             contactTextView.setText("Contact: " + surveillant.getContact());
             idSurveillantTextView.setText("ID Surveillant: " + surveillant.getId_surveillant());
             idSalleTextView.setText("Numéro de salle: " + surveillant.getNumero_salle());
-            emailTextView.setText("Email: " + (surveillant.getEmail() != null ? surveillant.getEmail() : "N/A"));
 
             try {
                 BarcodeEncoder barcodeEncoder = new BarcodeEncoder();

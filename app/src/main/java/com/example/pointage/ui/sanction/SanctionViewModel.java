@@ -295,21 +295,29 @@ public class SanctionViewModel extends ViewModel {
                                                                 if (p.getId_surveillant().equals(surveillantId)) {
                                                                     hasPointage = true;
 
-                                                                    Calendar pCal = Calendar.getInstance();
-                                                                    pCal.setTime(p.getHeure_pointage());
+                                                                    // Vérifier si le surveillant est programmé pour CET examen spécifique
+                                                                    String planningKey = surveillantId + "|" + idExamen;
+                                                                    boolean isScheduledForThisExam = idExamen != null && validPlannedSurveillants.contains(planningKey);
 
-                                                                    Calendar debutCalSameDay = (Calendar) examDay.clone();
-                                                                    debutCalSameDay.set(Calendar.HOUR_OF_DAY, heureDebCal.get(Calendar.HOUR_OF_DAY));
-                                                                    debutCalSameDay.set(Calendar.MINUTE, heureDebCal.get(Calendar.MINUTE));
-                                                                    debutCalSameDay.set(Calendar.SECOND, heureDebCal.get(Calendar.SECOND));
+                                                                    if (isScheduledForThisExam) {
+                                                                        Calendar pCal = Calendar.getInstance();
+                                                                        pCal.setTime(p.getHeure_pointage());
 
-                                                                    if (pCal.after(debutCalSameDay)) {
-                                                                        // Compter le retard et le persister
-                                                                        sanction.addRetard();
-                                                                        sanctionsToSave.add(new SanctionToSave(
-                                                                                surveillantId, "RETARD", examDay.getTime(),
-                                                                                surveillantNameById.get(surveillantId), examRoom, examSession
-                                                                        ));
+                                                                        Calendar debutCalSameDay = (Calendar) examDay.clone();
+                                                                        debutCalSameDay.set(Calendar.HOUR_OF_DAY, heureDebCal.get(Calendar.HOUR_OF_DAY));
+                                                                        debutCalSameDay.set(Calendar.MINUTE, heureDebCal.get(Calendar.MINUTE));
+                                                                        debutCalSameDay.set(Calendar.SECOND, heureDebCal.get(Calendar.SECOND));
+
+                                                                        if (pCal.after(debutCalSameDay)) {
+                                                                            // Compter le retard et le persister
+                                                                            sanction.addRetard();
+                                                                            sanctionsToSave.add(new SanctionToSave(
+                                                                                    surveillantId, "RETARD", examDay.getTime(),
+                                                                                    surveillantNameById.get(surveillantId), examRoom, examSession
+                                                                            ));
+                                                                        }
+                                                                    } else {
+                                                                        Log.d(TAG, "Surveillant " + surveillantId + " pas planifié pour examen " + idExamen + ", retard non enregistré");
                                                                     }
                                                                     break;
                                                                 }
@@ -354,6 +362,45 @@ public class SanctionViewModel extends ViewModel {
 
                                             // 6️⃣ Vérifier aussi les absences via planning_surveillance (pour les cas non couverts par examen)
                                             checkAbsencesFromPlanningAdditional(month, year, sanctionsToSave, surveillantNameById, pointagesByDayAndSession);
+
+                                            // 6️⃣️⃣ Récupérer les retards directement depuis la table pointage (champ retard=true)
+                                            for (int i = 0; i < pointageResult.size(); i++) {
+                                                try {
+                                                    JsonObject pointageDoc = pointageResult.get(i).getAsJsonObject();
+                                                    Long surveillantId = pointageDoc.get("id_surveillant").getAsLong();
+                                                    boolean isRetard = pointageDoc.get("retard").getAsBoolean();
+
+                                                    if (isRetard) {
+                                                        String ts = pointageDoc.get("heure_pointage").getAsString();
+                                                        Date heurePointage = DateUtils.parseSupabaseTimestamp(ts);
+                                                        Calendar pointageDay = getStartOfDay(heurePointage);
+                                                        int pointageMonth = pointageDay.get(Calendar.MONTH);
+                                                        int pointageYear = pointageDay.get(Calendar.YEAR);
+
+                                                        if (pointageMonth == month && pointageYear == year) {
+                                                            Calendar pHourCal = Calendar.getInstance();
+                                                            pHourCal.setTime(heurePointage);
+                                                            int hour = pHourCal.get(Calendar.HOUR_OF_DAY);
+                                                            String session = (hour < 12) ? "Matin" : "Après-midi";
+
+                                                            String roomNumber = pointageDoc.has("numero_salle") && !pointageDoc.get("numero_salle").isJsonNull()
+                                                                    ? pointageDoc.get("numero_salle").getAsString() : "N/A";
+
+                                                            String key = surveillantId + "_" + month;
+                                                            SurveillantSanction sanction = sanctionsMap.get(key);
+                                                            if (sanction != null) {
+                                                                sanction.addRetard();
+                                                                sanctionsToSave.add(new SanctionToSave(
+                                                                        surveillantId, "RETARD", pointageDay.getTime(),
+                                                                        surveillantNameById.get(surveillantId), roomNumber, session
+                                                                ));
+                                                            }
+                                                        }
+                                                    }
+                                                } catch (Exception e) {
+                                                    Log.e(TAG, "Erreur lors du traitement du pointage pour retard", e);
+                                                }
+                                            }
 
                                             // 7️⃣ Sauvegarder les sanctions dans la table sanction (en évitant les doublons)
                                             saveSanctionsToDatabase(sanctionsToSave, month, year, sanctionsMap, surveillantNameById);

@@ -49,6 +49,18 @@ public class HistoriqueViewModel extends ViewModel {
         return hour < 12 ? "Matin" : "Après-midi";
     }
 
+    // Normaliser les noms de salles pour la comparaison (trim, uppercase, remove accents)
+    private String normalizeRoomName(String roomName) {
+        if (roomName == null) return "";
+        String normalized = roomName.trim().toUpperCase(Locale.getDefault());
+        // Supprimer les accents
+        normalized = Normalizer.normalize(normalized, Normalizer.Form.NFD);
+        normalized = normalized.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+        // Remplacer les espaces multiples par un seul espace
+        normalized = normalized.replaceAll("\\s+", " ");
+        return normalized;
+    }
+
     private final MutableLiveData<List<Pointage>> historiqueLiveData = new MutableLiveData<>();
     private final ConnectClient connectClient = ConnectClient.getInstance();
     private final Handler absenceCheckHandler = new Handler(Looper.getMainLooper());
@@ -265,20 +277,16 @@ public class HistoriqueViewModel extends ViewModel {
                     String numeroSallePlanning = planning.get("numero_salle").getAsString();
                     Log.d("HistoriqueViewModel", "Planning " + i + ": numeroSallePlanning=" + numeroSallePlanning + ", id_surveillant=" + planning.get("id_surveillant").getAsLong());
 
-                    String[] surveillantSalles = numeroSalleSurveillant.split(",");
-                    boolean salleMatch = false;
-                    for (String survSalle : surveillantSalles) {
-                        if (numeroSallePlanning.trim().equals(survSalle.trim())) {
-                            salleMatch = true;
-                            matchedSalleHolder[0] = numeroSallePlanning.trim();
-                            matchedIdExamen = planning.get("id_examen").getAsLong();
-                            break;
-                        }
-                    }
+                    // Normaliser les noms de salles pour la comparaison (trim, uppercase, remove accents)
+                    String normalizedPlanningSalle = normalizeRoomName(numeroSallePlanning);
+                    String normalizedSurveillantSalle = normalizeRoomName(numeroSalleSurveillant);
 
-                    Log.d("HistoriqueViewModel", "Salle match: " + salleMatch + " for " + numeroSalleSurveillant);
-                    if (salleMatch) {
+                    Log.d("HistoriqueViewModel", "Normalized salle comparison: planning='" + normalizedPlanningSalle + "' vs surveillant='" + normalizedSurveillantSalle + "'");
+
+                    if (normalizedPlanningSalle.equals(normalizedSurveillantSalle)) {
                         anyMatch = true;
+                        matchedSalleHolder[0] = numeroSallePlanning.trim();
+                        matchedIdExamen = planning.get("id_examen").getAsLong();
                         Log.d("HistoriqueViewModel", "MATCH FOUND! Surveillant is scheduled in salle " + matchedSalleHolder[0]);
                         break;
                     }
