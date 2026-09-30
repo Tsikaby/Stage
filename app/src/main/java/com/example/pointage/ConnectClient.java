@@ -26,7 +26,7 @@ public class ConnectClient {
     private OkHttpClient httpClient;
     private Handler mainHandler;
 
-    private static final String LOCAL_API_URL = "http://10.0.0.28:8080/api/";
+    private static final String LOCAL_API_URL = "http://10.28.235.221:8080/api/";
 
     public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 

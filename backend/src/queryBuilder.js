@@ -20,7 +20,6 @@ function parseFilters(query) {
       const sqlOp = OPERATORS[opKey];
       let value = raw.substring(opKey.length);
       if (opKey === 'like.') {
-        // translate * to % for SQL wildcard
         value = value.replaceAll('*', '%');
       }
       filters.push({ column: key, op: sqlOp, value });
@@ -51,7 +50,6 @@ export function buildSelectQuery(table, query) {
   }
 
   if (orderParam) {
-   
     const parts = String(orderParam).split(',').map(p => p.trim()).filter(Boolean);
     if (parts.length) {
       const orderSql = parts.map(p => {

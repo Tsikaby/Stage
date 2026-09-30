@@ -23,7 +23,7 @@ const pool = new Pool({
 app.get('/api/:table', async (req, res) => {
   try {
     const { table } = req.params;
-    // Preserve duplicate query params (e.g., date_examen=gte... & date_examen=lte...)
+    
     const url = new URL(req.originalUrl, `http://localhost`);
     const qp = {};
     for (const [k, v] of url.searchParams.entries()) {
@@ -53,7 +53,7 @@ async function normalizeSanctionRow(row) {
 }
     const { text, values } = buildSelectQuery(table, qp);
     const { rows } = await pool.query(text, values);
-   
+    
     const t = table.toLowerCase();
     if (t === 'planning_surveillance') {
       res.json(rows.map(normalizePlanningRow));
@@ -155,12 +155,10 @@ function normalizePlanningRow(row) {
   const out = { ...row };
   const dateStr = toStr(out.date_examen);
   if (dateStr) {
-   
     try {
       const d = new Date(String(out.date_examen));
       out.date_examen = d.toLocaleDateString('en-CA', { timeZone: 'Indian/Antananarivo' });
     } catch (_) {}
-    // heure_debut
     if (out.heure_debut) {
       const hd = toStr(out.heure_debut);
       if (hd && (hd.includes('T') || hd.includes('-'))) {
@@ -169,7 +167,6 @@ function normalizePlanningRow(row) {
         out.heure_debut = combineDateAndTimeIfNeeded(dateStr, hd);
       }
     }
-    // heure_fin
     if (out.heure_fin) {
       const hf = toStr(out.heure_fin);
       if (hf && (hf.includes('T') || hf.includes('-'))) {
@@ -189,13 +186,11 @@ function toStr(v) {
 
 function combineDateAndTimeIfNeeded(dateStr, timeOrTs) {
   const s = (timeOrTs || '').trim();
-  
   if (s.includes('T') || s.includes('-')) return s;
-  
   let t = s;
   if (/^\d{2}:\d{2}$/.test(t)) t = t + ':00';
   if (/^\d{2}:\d{2}:\d{2}$/.test(t)) return `${dateStr} ${t}`;
-  return s; 
+  return s;
 }
 
 function normalizeExamenRow(row) {
@@ -276,7 +271,7 @@ async function deriveHeureDebutFromContext(date_examen, numero_salle, id_surveil
       if (rows[0]?.heure_debut != null) return rows[0].heure_debut;
     } catch (_) {}
   }
- 
+  
   try {
     const q2 = 'SELECT "heure_debut" FROM "examen" WHERE "date_examen" = $1 AND "numero_salle" = $2 ORDER BY "heure_debut" ASC LIMIT 1';
     const { rows } = await pool.query(q2, [date_examen, numero_salle]);

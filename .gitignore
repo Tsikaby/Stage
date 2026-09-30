@@ -14,20 +14,7 @@
 .cxx
 local.properties
 backend/node_modules/
-
-# Environment files
-backend/.env
-
-# SQL files (if sensitive)
-*.sql
-
-# Sensitive data - EmailUtility contains SMTP credentials
-**/EmailUtility.java
-
-# Logs
-*.log
-
-# Android
-*.apk
-*.ap_
-*.dex
+backend/package-lock.json
+.gradle/
+.idea/
+.zencoder/
